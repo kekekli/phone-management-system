@@ -1,0 +1,2372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手机号码管理系统 v3.0 - 快速启动版</title>
+    
+    <!-- 预连接和DNS预解析 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    
+    <!-- 关键CSS内联 -->
+    <style>
+        /* 骨架屏样式 - 关键CSS */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, transparent 37%, transparent 63%, #f0f0f0 75%);
+            background-size: 400% 100%;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes skeleton-loading {
+            0% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* 加载进度条 */
+        .loading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(0,0,0,0.1);
+            z-index: 9999;
+        }
+        
+        .loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        /* 首屏优化CSS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        #app {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .version-badge {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            min-height: 600px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        /* 骨架屏内容 */
+        .skeleton-header {
+            height: 60px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .skeleton-nav {
+            height: 40px;
+            width: 300px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .skeleton-content {
+            height: 400px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载进度条 -->
+    <div class="loading-progress" id="loadingProgress">
+        <div class="loading-progress-bar" id="loadingProgressBar"></div>
+    </div>
+
+    <div id="app">
+        <!-- 骨架屏 -->
+        <div v-if="isLoading" class="skeleton-container">
+            <div class="skeleton skeleton-header"></div>
+            <div class="skeleton skeleton-nav"></div>
+            <div class="skeleton skeleton-content"></div>
+        </div>
+
+        <!-- 实际内容 -->
+        <div v-show="!isLoading">
+            <!-- 性能指示器 -->
+            <div class="performance-indicator" v-if="showPerformance">
+                <div class="performance-metric">
+                    <span>数据总量:</span>
+                    <span class="performance-value">{{ phones.length }}</span>
+                </div>
+                <div class="performance-metric">
+                    <span>可见项:</span>
+                    <span class="performance-value">{{ visibleCount }}</span>
+                </div>
+                <div class="performance-metric">
+                    <span>内存优化:</span>
+                    <span class="performance-value">{{ memoryOptimization }}%</span>
+                </div>
+                <div class="performance-metric">
+                    <span>FPS:</span>
+                    <span class="performance-value">{{ currentFPS }}</span>
+                </div>
+                <div class="performance-metric">
+                    <span>加载时间:</span>
+                    <span class="performance-value">{{ loadTime }}ms</span>
+                </div>
+            </div>
+
+            <div class="header">
+                <div>
+                    <h1 style="display: inline-block;">手机号码管理系统</h1>
+                    <span class="version-badge" style="margin-left: 15px;">v3.0 快速启动版</span>
+                </div>
+                <div class="nav-tabs">
+                    <button class="nav-tab" :class="{active: currentTab === 'dashboard'}" @click="switchTab('dashboard')">
+                        仪表盘
+                    </button>
+                    <button class="nav-tab" :class="{active: currentTab === 'phones'}" @click="switchTab('phones')">
+                        号码管理
+                    </button>
+                    <button class="nav-tab" :class="{active: currentTab === 'accounts'}" @click="switchTab('accounts')">
+                        账号关联
+                    </button>
+                    <button class="nav-tab" :class="{active: currentTab === 'bills'}" @click="switchTab('bills')">
+                        费用统计
+                    </button>
+                    <button class="nav-tab" :class="{active: currentTab === 'settings'}" @click="switchTab('settings')">
+                        系统设置
+                    </button>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <!-- 仪表盘 -->
+                <div v-if="currentTab === 'dashboard'" class="tabs-content">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>总号码数</h3>
+                            <div class="value">{{ phones.length }}</div>
+                            <div class="change">活跃: {{ activePhones.length }}</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>本月费用</h3>
+                            <div class="value">¥{{ currentMonthCost.toFixed(2) }}</div>
+                            <div class="change">{{ costTrend }}</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>关联账号</h3>
+                            <div class="value">{{ accounts.length }}</div>
+                            <div class="change">{{ platformCount }} 个平台</div>
+                        </div>
+                        <div class="stat-card quick-query-card">
+                            <h3>快速查询</h3>
+                            <div style="display: flex; gap: 10px; margin: 10px 0;">
+                                <input type="text" placeholder="输入手机号" v-model="quickQueryPhone" 
+                                       @keyup.enter="quickQuery"
+                                       style="flex: 1; padding: 8px; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; font-size: 12px; background: rgba(255,255,255,0.1); color: white;">
+                                <button class="btn btn-sm" @click="quickQuery" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">查询</button>
+                            </div>
+                            <div v-if="quickQueryResult" style="font-size: 11px; margin-top: 10px; line-height: 1.4;">
+                                <div v-if="quickQueryResult.phoneStatus !== '未找到'">
+                                    <div><strong>{{ quickQueryResult.phoneOwner }}</strong> ({{ quickQueryResult.phoneCarrier }})</div>
+                                    <div>账号数量: {{ quickQueryResult.accountCount }} (正常: {{ quickQueryResult.normalAccountCount }})</div>
+                                    <div>平台: {{ quickQueryResult.platforms.slice(0, 3).join(', ') }}{{ quickQueryResult.platforms.length > 3 ? '...' : '' }}</div>
+                                    <div>状态: {{ quickQueryResult.phoneStatus }} | 月费: ¥{{ quickQueryResult.monthlyFee }}</div>
+                                </div>
+                                <div v-else style="color: rgba(255,255,255,0.7);">
+                                    {{ quickQueryResult.phoneStatus }}
+                                </div>
+                            </div>
+                            <div v-else style="font-size: 11px; margin-top: 10px; color: rgba(255,255,255,0.7);">
+                                输入手机号码快速查看关联账号信息
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin: 20px 0;">快速操作</h3>
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <button class="btn btn-primary" @click="openPhoneModal()">添加号码</button>
+                        <button class="btn btn-primary" @click="openBillModal()">录入账单</button>
+                        <button class="btn btn-primary" @click="batchLoadData">分批加载数据({{ batchSize }}条)</button>
+                        <button class="btn btn-primary" @click="togglePerformance">
+                            {{ showPerformance ? '隐藏' : '显示' }}性能指标
+                        </button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px;">
+                        <div style="background: #f9f9f9; padding: 20px; border-radius: 8px;">
+                            <h3 style="margin-bottom: 15px;">费用趋势</h3>
+                            <canvas id="costChart" style="height: 200px;" v-show="chartsLoaded"></canvas>
+                            <div v-show="!chartsLoaded" style="height: 200px; display: flex; align-items: center; justify-content: center; color: #666;">
+                                图表加载中...
+                            </div>
+                        </div>
+                        <div style="background: #f9f9f9; padding: 20px; border-radius: 8px;">
+                            <h3 style="margin-bottom: 15px;">费用构成</h3>
+                            <canvas id="billChart" style="height: 200px;" v-show="chartsLoaded"></canvas>
+                            <div v-show="!chartsLoaded" style="height: 200px; display: flex; align-items: center; justify-content: center; color: #666;">
+                                图表加载中...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 号码管理 - 使用虚拟滚动 -->
+                <div v-if="currentTab === 'phones'" class="tabs-content">
+                    <div class="search-bar">
+                        <input type="text" class="search-input" placeholder="搜索号码、运营商、负责人..." 
+                               v-model="phoneSearch" @input="debouncedSearch">
+                        <select class="search-input" style="width: 150px;" v-model="phoneFilter">
+                            <option value="">全部状态</option>
+                            <option value="active">在用</option>
+                            <option value="inactive">停用</option>
+                            <option value="cancelled">已销号</option>
+                        </select>
+                        <button class="btn btn-primary" @click="openPhoneModal()">添加号码</button>
+                        <button class="btn btn-primary" @click="loadMoreData" v-if="hasMoreData">
+                            加载更多 ({{ remainingCount }} 条剩余)
+                        </button>
+                    </div>
+
+                    <!-- 虚拟滚动容器 -->
+                    <div class="virtual-scroll-container" @scroll="handleScroll" ref="scrollContainer">
+                        <div class="virtual-scroll-spacer" :style="{ height: totalHeight + 'px' }">
+                            <div class="virtual-scroll-items" :style="{ transform: `translateY(${offsetY}px)` }">
+                                <div v-for="(phone, index) in visibleItems" 
+                                     :key="phone.id" 
+                                     class="virtual-item"
+                                     :style="{ height: itemHeight + 'px' }">
+                                    <div style="flex: 1; display: grid; grid-template-columns: 150px 100px 100px 120px 100px 100px auto; gap: 20px; align-items: center;">
+                                        <strong>{{ phone.number }}</strong>
+                                        <span>{{ phone.carrier }}</span>
+                                        <span :style="{color: getStatusColor(phone.status)}">{{ statusText[phone.status] }}</span>
+                                        <span>{{ phone.packageType }}</span>
+                                        <span>¥{{ phone.monthlyFee }}</span>
+                                        <span>{{ phone.owner }}</span>
+                                        <div>
+                                            <button class="btn btn-sm" @click="editPhone(phone)">编辑</button>
+                                            <button class="btn btn-sm" @click="deletePhone(phone.id)" style="margin-left: 5px;">删除</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 10px; text-align: center; color: #666; font-size: 14px;">
+                        显示 {{ visibleStart + 1 }}-{{ Math.min(visibleEnd, filteredPhones.length) }} / 共 {{ filteredPhones.length }} 条 (已加载 {{ loadedDataCount }} 条)
+                    </div>
+                </div>
+
+                <!-- 账号关联增强版 -->
+                <div v-if="currentTab === 'accounts'" class="tabs-content">
+                    <div class="enhanced-search-bar">
+                        <!-- 筛选模式选择 -->
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <button class="filter-mode-btn" :class="{active: accountFilterMode === 'all'}" @click="setAccountFilterMode('all')">
+                                显示全部账号
+                            </button>
+                            <button class="filter-mode-btn" :class="{active: accountFilterMode === 'phone'}" @click="setAccountFilterMode('phone')">
+                                按手机号筛选
+                            </button>
+                            <button class="filter-mode-btn" :class="{active: accountFilterMode === 'platform'}" @click="setAccountFilterMode('platform')">
+                                按平台筛选
+                            </button>
+                        </div>
+                        
+                        <!-- 筛选条件 -->
+                        <div class="search-bar">
+                            <!-- 手机号筛选 -->
+                            <select v-if="accountFilterMode === 'phone'" class="search-input" v-model="selectedPhoneForAccount">
+                                <option value="">选择手机号查看关联账号</option>
+                                <option v-for="phone in activePhones" :key="phone.id" :value="phone.id">
+                                    {{ phone.number }} - {{ phone.owner }}
+                                </option>
+                            </select>
+                            
+                            <!-- 平台筛选 -->
+                            <select v-if="accountFilterMode === 'platform'" class="search-input" v-model="selectedPlatform">
+                                <option value="">选择平台</option>
+                                <option v-for="platform in platforms" :key="platform" :value="platform">
+                                    {{ platform }}
+                                </option>
+                            </select>
+                            
+                            <!-- 号码搜索框 -->
+                            <input type="text" class="search-input" placeholder="输入号码快速查找" 
+                                   v-model="accountPhoneSearch" style="flex: 1;">
+                            
+                            <button class="btn btn-primary" @click="openAccountModal()" 
+                                    :disabled="accountFilterMode === 'phone' && !selectedPhoneForAccount">
+                                添加账号
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 账号列表展示 -->
+                    <div v-if="displayedAccounts.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 20px;">
+                        <div v-for="account in displayedAccounts" :key="account.id" 
+                             class="account-card" :class="getPlatformClass(account.platform)">
+                            <div class="account-header">
+                                <h4>{{ account.accountName }}</h4>
+                                <span class="platform-badge" :style="{backgroundColor: getPlatformColor(account.platform)}">
+                                    {{ account.platform }}
+                                </span>
+                            </div>
+                            <p style="color: #666; margin: 10px 0;">
+                                <strong>手机号:</strong> {{ getPhoneNumber(account.phoneId) }}<br>
+                                <strong>账号ID:</strong> {{ account.accountId || '未设置' }}<br>
+                                <strong>用途:</strong> {{ account.purpose }}<br>
+                                <strong>状态:</strong> <span :style="{color: getAccountStatusColor(account.status)}">
+                                    {{ accountStatusText[account.status] }}
+                                </span><br>
+                                <strong>粉丝数:</strong> {{ account.followers || 0 }}
+                            </p>
+                            <div style="margin-top: 15px;">
+                                <button class="btn btn-sm" @click="editAccount(account)">编辑</button>
+                                <button class="btn btn-sm" @click="deleteAccount(account.id)" style="margin-left: 5px;">删除</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 空状态显示 -->
+                    <div v-else style="text-align: center; padding: 50px; color: #666;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">📱</div>
+                        <h3>暂无账号数据</h3>
+                        <p>请添加账号或调整筛选条件</p>
+                    </div>
+                </div>
+
+                <!-- 费用统计 -->
+                <div v-if="currentTab === 'bills'" class="tabs-content">
+                    <div class="search-bar">
+                        <input type="month" class="search-input" v-model="selectedMonth">
+                        <button class="btn btn-primary" @click="openBillModal()">录入账单</button>
+                        <button class="btn btn-primary" @click="exportBillReport">导出报表</button>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f9f9f9;">
+                                    <th style="padding: 12px; text-align: left;">手机号</th>
+                                    <th style="padding: 12px; text-align: left;">账单月份</th>
+                                    <th style="padding: 12px; text-align: left;">基础费用</th>
+                                    <th style="padding: 12px; text-align: left;">额外费用</th>
+                                    <th style="padding: 12px; text-align: left;">总费用</th>
+                                    <th style="padding: 12px; text-align: left;">充值金额</th>
+                                    <th style="padding: 12px; text-align: left;">当前余额</th>
+                                    <th style="padding: 12px; text-align: left;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="bill in filteredBills" :key="bill.id" style="border-bottom: 1px solid #e5e5e5;">
+                                    <td style="padding: 12px;">{{ getPhoneNumber(bill.phoneId) }}</td>
+                                    <td style="padding: 12px;">{{ bill.yearMonth }}</td>
+                                    <td style="padding: 12px;">¥{{ bill.baseFee }}</td>
+                                    <td style="padding: 12px;">¥{{ bill.extraFee }}</td>
+                                    <td style="padding: 12px;"><strong>¥{{ bill.totalFee }}</strong></td>
+                                    <td style="padding: 12px;">¥{{ bill.rechargeAmount }}</td>
+                                    <td style="padding: 12px;">¥{{ bill.balance }}</td>
+                                    <td style="padding: 12px;">
+                                        <button class="btn btn-sm" @click="editBill(bill)">编辑</button>
+                                        <button class="btn btn-sm" @click="deleteBill(bill.id)" style="margin-left: 5px;">删除</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 系统设置 -->
+                <div v-if="currentTab === 'settings'" class="tabs-content">
+                    <h3>数据管理</h3>
+                    <div style="display: flex; gap: 10px; margin: 20px 0;">
+                        <button class="btn btn-primary" @click="backupData">备份数据</button>
+                        <button class="btn btn-primary" @click="restoreData">恢复数据</button>
+                        <button class="btn btn-primary" @click="clearData" style="background: #f44336;">清空数据</button>
+                    </div>
+
+                    <h3 style="margin-top: 30px;">导入导出</h3>
+                    <div style="display: flex; gap: 10px; margin: 20px 0;">
+                        <button class="btn btn-primary" @click="importPhones">导入号码</button>
+                        <button class="btn btn-primary" @click="exportPhones">导出号码</button>
+                        <button class="btn btn-primary" @click="importBills">导入账单</button>
+                    </div>
+
+                    <h3 style="margin-top: 30px;">性能优化说明</h3>
+                    <div style="background: #f9f9f9; padding: 20px; border-radius: 8px;">
+                        <h4>v3.0 快速启动版优化内容：</h4>
+                        <ul style="margin-left: 20px; line-height: 2;">
+                            <li>✅ 本地JS库：Vue.js和Chart.js本地化</li>
+                            <li>✅ 骨架屏：首屏快速渲染</li>
+                            <li>✅ 加载进度：可视化加载进度</li>
+                            <li>✅ 延迟加载：Chart.js按需加载</li>
+                            <li>✅ 分批加载：数据分批处理({{ batchSize }}条)</li>
+                            <li>✅ 资源优化：关键CSS内联</li>
+                            <li>✅ Service Worker：离线缓存支持</li>
+                            <li>✅ 预连接：DNS预解析优化</li>
+                        </ul>
+                        
+                        <h4 style="margin-top: 20px;">加载统计：</h4>
+                        <p>首屏渲染时间: {{ loadTime }}ms</p>
+                        <p>已加载数据: {{ loadedDataCount }} / {{ totalDataCount }} 条</p>
+                        <p>内存优化: {{ memoryOptimization }}%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 手机号编辑模态框 -->
+            <div class="modal" :class="{show: showPhoneModal}">
+                <div class="modal-content">
+                    <h2>{{ editingPhone ? '编辑手机号' : '添加手机号' }}</h2>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">手机号码</label>
+                        <input type="text" v-model="phoneForm.number" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">运营商</label>
+                        <select v-model="phoneForm.carrier" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option>中国移动</option>
+                            <option>中国联通</option>
+                            <option>中国电信</option>
+                        </select>
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">状态</label>
+                        <select v-model="phoneForm.status" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="active">在用</option>
+                            <option value="inactive">停用</option>
+                            <option value="cancelled">已销号</option>
+                        </select>
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">套餐类型</label>
+                        <input type="text" v-model="phoneForm.packageType" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">月费(元)</label>
+                        <input type="number" v-model="phoneForm.monthlyFee" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">负责人</label>
+                        <input type="text" v-model="phoneForm.owner" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="btn" @click="closePhoneModal">取消</button>
+                        <button class="btn btn-primary" @click="savePhone">保存</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 账号编辑模态框 -->
+            <div class="modal" :class="{show: showAccountModal}">
+                <div class="modal-content">
+                    <h2>{{ editingAccount ? '编辑账号' : '添加账号' }}</h2>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">关联手机号</label>
+                        <select v-model="accountForm.phoneId" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">选择手机号</option>
+                            <option v-for="phone in activePhones" :key="phone.id" :value="phone.id">
+                                {{ phone.number }} - {{ phone.owner }}
+                            </option>
+                        </select>
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">平台</label>
+                        <select v-model="accountForm.platform" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option v-for="platform in platforms" :key="platform" :value="platform">
+                                {{ platform }}
+                            </option>
+                        </select>
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">账号名称</label>
+                        <input type="text" v-model="accountForm.accountName" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">账号ID（可选）</label>
+                        <input type="text" v-model="accountForm.accountId" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">用途</label>
+                        <select v-model="accountForm.purpose" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="main">主账号</option>
+                            <option value="backup">备用账号</option>
+                            <option value="test">测试账号</option>
+                            <option value="business">商用账号</option>
+                        </select>
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">状态</label>
+                        <select v-model="accountForm.status" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="normal">正常</option>
+                            <option value="restricted">受限</option>
+                            <option value="banned">封禁</option>
+                        </select>
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">粉丝数</label>
+                        <input type="number" v-model="accountForm.followers" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">备注</label>
+                        <textarea v-model="accountForm.notes" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; height: 80px;"></textarea>
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="btn" @click="closeAccountModal">取消</button>
+                        <button class="btn btn-primary" @click="saveAccount">保存</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 账单编辑模态框 -->
+            <div class="modal" :class="{show: showBillModal}">
+                <div class="modal-content">
+                    <h2>{{ editingBill ? '编辑账单' : '录入账单' }}</h2>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">手机号</label>
+                        <select v-model="billForm.phoneId" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">选择手机号</option>
+                            <option v-for="phone in phones" :key="phone.id" :value="phone.id">
+                                {{ phone.number }} - {{ phone.owner }}
+                            </option>
+                        </select>
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">账单月份</label>
+                        <input type="month" v-model="billForm.yearMonth" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">基础费用(元)</label>
+                        <input type="number" v-model="billForm.baseFee" step="0.01" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">额外费用(元)</label>
+                        <input type="number" v-model="billForm.extraFee" step="0.01" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">充值金额(元)</label>
+                        <input type="number" v-model="billForm.rechargeAmount" step="0.01" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 5px;">当前余额(元)</label>
+                        <input type="number" v-model="billForm.balance" step="0.01" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="margin: 20px 0; padding: 15px; background: #f9f9f9; border-radius: 4px;">
+                        <strong>总费用: ¥{{ (parseFloat(billForm.baseFee) + parseFloat(billForm.extraFee)).toFixed(2) }}</strong>
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="btn" @click="closeBillModal">取消</button>
+                        <button class="btn btn-primary" @click="saveBill">保存</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toast提示 -->
+            <div v-if="toast.show" class="toast" :class="toast.type">
+                {{ toast.message }}
+            </div>
+        </div>
+    </div>
+
+    <!-- 延迟加载完整CSS -->
+    <link rel="preload" href="data:text/css;base64," as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="data:text/css;base64,"></noscript>
+
+    <!-- 本地JS库 -->
+    <script src="./libs/vue.global.prod.js"></script>
+
+    <script>
+        // Service Worker 注册
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js')
+                .then(function(registration) {
+                    console.log('ServiceWorker registration successful');
+                })
+                .catch(function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+
+        const { createApp } = Vue;
+
+        // 加载进度管理
+        class LoadingManager {
+            constructor() {
+                this.progress = 0;
+                this.steps = ['初始化应用', '加载数据库', '构建索引', '渲染界面', '加载完成'];
+                this.currentStep = 0;
+                this.progressBar = document.getElementById('loadingProgressBar');
+                this.progressContainer = document.getElementById('loadingProgress');
+            }
+
+            updateProgress(percent, step) {
+                this.progress = Math.min(percent, 100);
+                this.progressBar.style.width = this.progress + '%';
+                
+                if (step !== undefined) {
+                    this.currentStep = step;
+                    console.log(`加载进度: ${this.progress}% - ${this.steps[this.currentStep] || '加载中'}`);
+                }
+
+                if (this.progress >= 100) {
+                    setTimeout(() => {
+                        this.hide();
+                    }, 300);
+                }
+            }
+
+            hide() {
+                this.progressContainer.style.opacity = '0';
+                setTimeout(() => {
+                    this.progressContainer.style.display = 'none';
+                }, 300);
+            }
+        }
+
+        // IndexedDB工具类
+        class Database {
+            constructor() {
+                this.db = null;
+                this.dbName = 'PhoneManagementDB';
+                this.version = 3;
+            }
+
+            async init() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.version);
+
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => {
+                        this.db = request.result;
+                        resolve(this.db);
+                    };
+
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+
+                        if (!db.objectStoreNames.contains('phones')) {
+                            const phoneStore = db.createObjectStore('phones', { keyPath: 'id' });
+                            phoneStore.createIndex('number', 'number', { unique: false });
+                            phoneStore.createIndex('status', 'status');
+                        }
+
+                        if (!db.objectStoreNames.contains('accounts')) {
+                            const accountStore = db.createObjectStore('accounts', { keyPath: 'id' });
+                            accountStore.createIndex('phoneId', 'phoneId');
+                            accountStore.createIndex('platform', 'platform');
+                        }
+
+                        if (!db.objectStoreNames.contains('bills')) {
+                            const billStore = db.createObjectStore('bills', { keyPath: 'id' });
+                            billStore.createIndex('phoneId', 'phoneId');
+                            billStore.createIndex('yearMonth', 'yearMonth');
+                        }
+
+                        if (!db.objectStoreNames.contains('settings')) {
+                            db.createObjectStore('settings', { keyPath: 'key' });
+                        }
+                    };
+                });
+            }
+
+            async getAll(storeName) {
+                const transaction = this.db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                return new Promise((resolve, reject) => {
+                    const request = store.getAll();
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async add(storeName, data) {
+                const transaction = this.db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                return new Promise((resolve, reject) => {
+                    const request = store.add(data);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async update(storeName, data) {
+                const transaction = this.db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                return new Promise((resolve, reject) => {
+                    const request = store.put(data);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async delete(storeName, id) {
+                const transaction = this.db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                return new Promise((resolve, reject) => {
+                    const request = store.delete(id);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async get(storeName, id) {
+                const transaction = this.db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                return new Promise((resolve, reject) => {
+                    const request = store.get(id);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async clear(storeName) {
+                const transaction = this.db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                return new Promise((resolve, reject) => {
+                    const request = store.clear();
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+        }
+
+        // 应用实例
+        const app = createApp({
+            data() {
+                return {
+                    // 加载状态
+                    isLoading: true,
+                    chartsLoaded: false,
+                    loadingManager: new LoadingManager(),
+                    startTime: Date.now(),
+                    loadTime: 0,
+                    
+                    // 数据库
+                    db: new Database(),
+                    
+                    // 分批加载
+                    batchSize: 50,
+                    loadedDataCount: 0,
+                    totalDataCount: 0,
+                    hasMoreData: true,
+                    remainingCount: 0,
+                    
+                    // 虚拟滚动相关
+                    itemHeight: 50,
+                    containerHeight: 600,
+                    scrollTop: 0,
+                    visibleStart: 0,
+                    visibleEnd: 20,
+                    visibleCount: 20,
+                    bufferSize: 5,
+                    
+                    // 性能监控
+                    showPerformance: false,
+                    currentFPS: 60,
+                    memoryOptimization: 0,
+                    fpsInterval: null,
+                    lastFrameTime: Date.now(),
+                    
+                    // 页面状态
+                    currentTab: 'dashboard',
+                    
+                    // 数据
+                    phones: [],
+                    accounts: [],
+                    bills: [],
+                    settings: {},
+                    platforms: ['抖音', '快手', '小红书', 'B站', '视频号', '知乎', '微博', '今日头条', 'YouTube', 'TikTok'],
+                    platformList: '',
+                    
+                    // 账号关联增强
+                    accountFilterMode: 'phone', // 'all', 'phone', 'platform'
+                    selectedPlatform: '',
+                    accountPhoneSearch: '',
+                    
+                    // 快速查询
+                    quickQueryPhone: '',
+                    quickQueryResult: null,
+                    
+                    // Map索引
+                    phoneMap: new Map(),
+                    accountsByPhoneMap: new Map(),
+                    
+                    // 搜索和筛选
+                    phoneSearch: '',
+                    debouncedPhoneSearch: '',
+                    phoneFilter: '',
+                    selectedPhoneForAccount: '',
+                    selectedMonth: new Date().toISOString().slice(0, 7),
+                    
+                    // 防抖定时器
+                    searchDebounceTimer: null,
+                    toastTimer: null,
+                    
+                    // 模态框
+                    showPhoneModal: false,
+                    showAccountModal: false,
+                    showBillModal: false,
+                    
+                    // 表单
+                    phoneForm: this.getEmptyPhoneForm(),
+                    accountForm: this.getEmptyAccountForm(),
+                    billForm: this.getEmptyBillForm(),
+                    
+                    // 编辑状态
+                    editingPhone: null,
+                    editingAccount: null,
+                    editingBill: null,
+                    
+                    // Toast提示
+                    toast: {
+                        show: false,
+                        message: '',
+                        type: 'success'
+                    },
+                    
+                    // 图表
+                    costChart: null,
+                    billChart: null,
+                    chartLibLoaded: false,
+                    
+                    // 状态文本映射
+                    statusText: {
+                        active: '在用',
+                        inactive: '停用',
+                        cancelled: '已销号'
+                    },
+                    accountStatusText: {
+                        normal: '正常',
+                        restricted: '受限',
+                        banned: '封禁'
+                    }
+                };
+            },
+
+            computed: {
+                // 虚拟滚动相关计算
+                totalHeight() {
+                    return this.filteredPhones.length * this.itemHeight;
+                },
+                
+                offsetY() {
+                    return Math.max(0, this.visibleStart - this.bufferSize) * this.itemHeight;
+                },
+                
+                visibleItems() {
+                    const start = Math.max(0, this.visibleStart - this.bufferSize);
+                    const end = Math.min(this.filteredPhones.length, this.visibleEnd + this.bufferSize);
+                    return this.filteredPhones.slice(start, end);
+                },
+                
+                // 过滤后的手机号列表（使用防抖后的搜索值）
+                filteredPhones() {
+                    return this.phones.filter(phone => {
+                        const matchSearch = !this.debouncedPhoneSearch || 
+                            phone.number.includes(this.debouncedPhoneSearch) ||
+                            phone.carrier.includes(this.debouncedPhoneSearch) ||
+                            phone.owner.includes(this.debouncedPhoneSearch);
+                        const matchFilter = !this.phoneFilter || phone.status === this.phoneFilter;
+                        return matchSearch && matchFilter;
+                    });
+                },
+                
+                activePhones() {
+                    return this.phones.filter(p => p.status === 'active');
+                },
+                
+                // 使用Map优化的账号过滤
+                filteredAccounts() {
+                    if (this.selectedPhoneForAccount && this.accountsByPhoneMap.has(this.selectedPhoneForAccount)) {
+                        return this.accountsByPhoneMap.get(this.selectedPhoneForAccount);
+                    }
+                    return [];
+                },
+                
+                // 增强的账号显示逻辑
+                displayedAccounts() {
+                    let accounts = [];
+                    
+                    switch (this.accountFilterMode) {
+                        case 'all':
+                            accounts = this.accounts;
+                            break;
+                        case 'phone':
+                            accounts = this.filteredAccounts;
+                            break;
+                        case 'platform':
+                            accounts = this.selectedPlatform ? 
+                                this.accounts.filter(acc => acc.platform === this.selectedPlatform) : 
+                                this.accounts;
+                            break;
+                        default:
+                            accounts = this.accounts;
+                    }
+                    
+                    // 按号码搜索过滤
+                    if (this.accountPhoneSearch.trim()) {
+                        const searchTerm = this.accountPhoneSearch.trim();
+                        accounts = accounts.filter(acc => {
+                            const phone = this.phoneMap.get(acc.phoneId);
+                            return phone && phone.number.includes(searchTerm);
+                        });
+                    }
+                    
+                    return accounts;
+                },
+                
+                filteredBills() {
+                    return this.bills.filter(b => b.yearMonth === this.selectedMonth);
+                },
+                
+                currentMonthCost() {
+                    const currentMonth = new Date().toISOString().slice(0, 7);
+                    return this.bills
+                        .filter(b => b.yearMonth === currentMonth)
+                        .reduce((sum, b) => sum + b.totalFee, 0);
+                },
+                
+                costTrend() {
+                    const currentMonth = new Date().toISOString().slice(0, 7);
+                    const lastMonth = new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().slice(0, 7);
+                    
+                    const current = this.bills.filter(b => b.yearMonth === currentMonth).reduce((sum, b) => sum + b.totalFee, 0);
+                    const last = this.bills.filter(b => b.yearMonth === lastMonth).reduce((sum, b) => sum + b.totalFee, 0);
+                    
+                    if (last === 0) return '新增';
+                    const change = ((current - last) / last * 100).toFixed(1);
+                    return change > 0 ? `↑${change}%` : `↓${Math.abs(change)}%`;
+                },
+                
+                platformCount() {
+                    return new Set(this.accounts.map(a => a.platform)).size;
+                },
+                
+                monthlyBaseFee() {
+                    const currentMonth = new Date().toISOString().slice(0, 7);
+                    return this.bills
+                        .filter(b => b.yearMonth === currentMonth)
+                        .reduce((sum, b) => sum + b.baseFee, 0);
+                },
+                
+                monthlyExtraFee() {
+                    const currentMonth = new Date().toISOString().slice(0, 7);
+                    return this.bills
+                        .filter(b => b.yearMonth === currentMonth)
+                        .reduce((sum, b) => sum + b.extraFee, 0);
+                }
+            },
+
+            methods: {
+                // 初始化应用
+                async initApp() {
+                    try {
+                        this.loadingManager.updateProgress(10, 0);
+
+                        // 初始化数据库
+                        await this.db.init();
+                        this.loadingManager.updateProgress(30, 1);
+
+                        // 分批加载初始数据
+                        await this.loadInitialData();
+                        this.loadingManager.updateProgress(60, 2);
+
+                        // 构建索引
+                        this.buildMaps();
+                        this.loadingManager.updateProgress(80, 3);
+
+                        // 标记加载完成
+                        this.isLoading = false;
+                        this.loadTime = Date.now() - this.startTime;
+                        this.loadingManager.updateProgress(100, 4);
+
+                        // 延迟初始化图表
+                        this.$nextTick(() => {
+                            this.lazyLoadCharts();
+                        });
+
+                    } catch (error) {
+                        console.error('应用初始化失败:', error);
+                        this.showToast('应用初始化失败: ' + error.message, 'error');
+                    }
+                },
+
+                // 分批加载初始数据
+                async loadInitialData() {
+                    try {
+                        const [allPhones, accounts, bills, settings] = await Promise.all([
+                            this.db.getAll('phones'),
+                            this.db.getAll('accounts'),
+                            this.db.getAll('bills'),
+                            this.db.get('settings', 'general')
+                        ]);
+                        
+                        this.totalDataCount = (allPhones || []).length;
+                        
+                        // 分批加载手机号（首批50条）
+                        this.phones = (allPhones || []).slice(0, this.batchSize);
+                        this.loadedDataCount = this.phones.length;
+                        this.hasMoreData = this.loadedDataCount < this.totalDataCount;
+                        this.remainingCount = this.totalDataCount - this.loadedDataCount;
+                        
+                        // 保存完整数据以备后续加载
+                        this.allPhonesData = allPhones || [];
+                        
+                        this.accounts = accounts || [];
+                        this.bills = bills || [];
+                        
+                        if (settings) {
+                            this.settings = settings.value;
+                        }
+                        
+                        // 更新平台列表
+                        this.platformList = this.platforms.join(', ');
+                        
+                    } catch (error) {
+                        console.error('加载数据失败:', error);
+                        throw error;
+                    }
+                },
+
+                // 加载更多数据
+                loadMoreData() {
+                    const nextBatch = this.allPhonesData.slice(this.loadedDataCount, this.loadedDataCount + this.batchSize);
+                    this.phones.push(...nextBatch);
+                    this.loadedDataCount = this.phones.length;
+                    this.hasMoreData = this.loadedDataCount < this.totalDataCount;
+                    this.remainingCount = this.totalDataCount - this.loadedDataCount;
+                    
+                    this.buildMaps();
+                    this.showToast(`已加载 ${nextBatch.length} 条数据`);
+                },
+
+                // 批量加载数据
+                async batchLoadData() {
+                    if (this.hasMoreData) {
+                        this.loadMoreData();
+                    } else {
+                        // 生成测试数据
+                        await this.generateBatchTestData();
+                    }
+                },
+
+                // 延迟加载图表
+                async lazyLoadCharts() {
+                    if (this.chartLibLoaded) {
+                        this.initCharts();
+                        return;
+                    }
+
+                    try {
+                        // 动态加载Chart.js
+                        const script = document.createElement('script');
+                        script.src = './libs/chart.min.js';
+                        script.onload = () => {
+                            this.chartLibLoaded = true;
+                            this.chartsLoaded = true;
+                            this.initCharts();
+                        };
+                        document.head.appendChild(script);
+                    } catch (error) {
+                        console.error('Chart.js加载失败:', error);
+                    }
+                },
+
+                // 标签切换
+                switchTab(tab) {
+                    this.currentTab = tab;
+                    
+                    // 切换到仪表盘时才初始化图表
+                    if (tab === 'dashboard' && !this.chartsLoaded && this.chartLibLoaded) {
+                        this.$nextTick(() => {
+                            this.initCharts();
+                        });
+                    }
+                },
+
+                // 虚拟滚动处理
+                handleScroll(event) {
+                    this.scrollTop = event.target.scrollTop;
+                    this.updateVisibleRange();
+                },
+                
+                updateVisibleRange() {
+                    this.visibleStart = Math.floor(this.scrollTop / this.itemHeight);
+                    this.visibleEnd = Math.ceil((this.scrollTop + this.containerHeight) / this.itemHeight);
+                    this.visibleCount = this.visibleEnd - this.visibleStart;
+                    
+                    // 更新内存优化指标
+                    const totalPossible = this.filteredPhones.length;
+                    const actualRendered = this.visibleCount + this.bufferSize * 2;
+                    this.memoryOptimization = totalPossible > 0 ? Math.round((1 - actualRendered / totalPossible) * 100) : 0;
+                },
+                
+                // 防抖搜索
+                debouncedSearch() {
+                    clearTimeout(this.searchDebounceTimer);
+                    this.searchDebounceTimer = setTimeout(() => {
+                        this.debouncedPhoneSearch = this.phoneSearch;
+                    }, 300);
+                },
+                
+                // 构建Map索引
+                buildMaps() {
+                    this.phoneMap = new Map(this.phones.map(p => [p.id, p]));
+                    
+                    this.accountsByPhoneMap = new Map();
+                    this.accounts.forEach(acc => {
+                        if (!this.accountsByPhoneMap.has(acc.phoneId)) {
+                            this.accountsByPhoneMap.set(acc.phoneId, []);
+                        }
+                        this.accountsByPhoneMap.get(acc.phoneId).push(acc);
+                    });
+                },
+                
+                // 使用Map优化的查询
+                getPhoneNumber(phoneId) {
+                    const phone = this.phoneMap.get(phoneId);
+                    return phone ? phone.number : '未知';
+                },
+                
+                // 账号关联功能增强
+                setAccountFilterMode(mode) {
+                    this.accountFilterMode = mode;
+                    // 重置筛选条件
+                    this.selectedPhoneForAccount = '';
+                    this.selectedPlatform = '';
+                    this.accountPhoneSearch = '';
+                },
+                
+                // 获取平台颜色
+                getPlatformColor(platform) {
+                    const colors = {
+                        '抖音': '#fe2c55',
+                        '快手': '#ff6600',
+                        '小红书': '#ff2442',
+                        'B站': '#00aeec',
+                        '视频号': '#07c160',
+                        '知乎': '#0066ff',
+                        '微博': '#e6162d',
+                        '今日头条': '#ff4500',
+                        'YouTube': '#ff0000',
+                        'TikTok': '#000000'
+                    };
+                    return colors[platform] || '#666';
+                },
+                
+                // 获取平台样式类
+                getPlatformClass(platform) {
+                    return 'platform-' + platform.toLowerCase().replace(/[^a-z0-9]/g, '');
+                },
+                
+                // 快速查询功能
+                quickQuery() {
+                    if (!this.quickQueryPhone.trim()) {
+                        this.quickQueryResult = null;
+                        return;
+                    }
+                    
+                    const phoneNumber = this.quickQueryPhone.trim();
+                    const phone = this.phones.find(p => p.number.includes(phoneNumber));
+                    
+                    if (!phone) {
+                        this.quickQueryResult = {
+                            accountCount: 0,
+                            platforms: [],
+                            phoneStatus: '未找到',
+                            phoneOwner: '',
+                            phoneCarrier: ''
+                        };
+                        this.showToast('未找到匹配的手机号', 'error');
+                        return;
+                    }
+                    
+                    const relatedAccounts = this.accounts.filter(acc => acc.phoneId === phone.id);
+                    const platforms = [...new Set(relatedAccounts.map(acc => acc.platform))];
+                    const normalAccounts = relatedAccounts.filter(acc => acc.status === 'normal').length;
+                    
+                    this.quickQueryResult = {
+                        accountCount: relatedAccounts.length,
+                        normalAccountCount: normalAccounts,
+                        platforms: platforms,
+                        phoneStatus: this.statusText[phone.status] || '未知',
+                        phoneOwner: phone.owner,
+                        phoneCarrier: phone.carrier,
+                        monthlyFee: phone.monthlyFee
+                    };
+                    
+                    this.showToast('查询成功');
+                    
+                    // 自动切换到账号关联页面并筛选该号码
+                    setTimeout(() => {
+                        this.currentTab = 'accounts';
+                        this.accountFilterMode = 'phone';
+                        this.selectedPhoneForAccount = phone.id;
+                    }, 1000);
+                },
+                
+                // 清除快速查询结果
+                clearQuickQuery() {
+                    this.quickQueryPhone = '';
+                    this.quickQueryResult = null;
+                },
+                
+                // 性能监控
+                togglePerformance() {
+                    this.showPerformance = !this.showPerformance;
+                    if (this.showPerformance) {
+                        this.startFPSMonitor();
+                    } else {
+                        this.stopFPSMonitor();
+                    }
+                },
+                
+                startFPSMonitor() {
+                    const updateFPS = () => {
+                        const now = Date.now();
+                        const delta = now - this.lastFrameTime;
+                        this.currentFPS = Math.round(1000 / delta);
+                        this.lastFrameTime = now;
+                        this.fpsInterval = requestAnimationFrame(updateFPS);
+                    };
+                    updateFPS();
+                },
+                
+                stopFPSMonitor() {
+                    if (this.fpsInterval) {
+                        cancelAnimationFrame(this.fpsInterval);
+                        this.fpsInterval = null;
+                    }
+                },
+
+                // 图表初始化（带内存泄漏修复）
+                initCharts() {
+                    if (!window.Chart) return;
+                    
+                    // 先销毁旧的Chart实例
+                    if (this.costChart) {
+                        this.costChart.destroy();
+                        this.costChart = null;
+                    }
+                    if (this.billChart) {
+                        this.billChart.destroy();
+                        this.billChart = null;
+                    }
+                    
+                    const costCtx = document.getElementById('costChart');
+                    if (costCtx) {
+                        this.costChart = new Chart(costCtx, {
+                            type: 'line',
+                            data: {
+                                labels: this.getLastSixMonths(),
+                                datasets: [{
+                                    label: '月度费用',
+                                    data: this.getMonthlyTrend(),
+                                    borderColor: '#667eea',
+                                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                    tension: 0.4
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                animation: {
+                                    duration: 0
+                                },
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    
+                    const billCtx = document.getElementById('billChart');
+                    if (billCtx) {
+                        this.billChart = new Chart(billCtx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['基础费用', '额外费用'],
+                                datasets: [{
+                                    data: [this.monthlyBaseFee, this.monthlyExtraFee],
+                                    backgroundColor: ['#667eea', '#764ba2']
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                animation: {
+                                    duration: 0
+                                }
+                            }
+                        });
+                    }
+                },
+                
+                updateCharts() {
+                    if (this.costChart) {
+                        this.costChart.data.datasets[0].data = this.getMonthlyTrend();
+                        this.costChart.update('none');
+                    }
+                    
+                    if (this.billChart) {
+                        this.billChart.data.datasets[0].data = [this.monthlyBaseFee, this.monthlyExtraFee];
+                        this.billChart.update('none');
+                    }
+                },
+                
+                getLastSixMonths() {
+                    const months = [];
+                    for (let i = 5; i >= 0; i--) {
+                        const date = new Date();
+                        date.setMonth(date.getMonth() - i);
+                        months.push(date.toISOString().slice(0, 7));
+                    }
+                    return months;
+                },
+                
+                getMonthlyTrend() {
+                    return this.getLastSixMonths().map(month => {
+                        return this.bills
+                            .filter(b => b.yearMonth === month)
+                            .reduce((sum, b) => sum + b.totalFee, 0);
+                    });
+                },
+
+                // 表单操作
+                getEmptyPhoneForm() {
+                    return {
+                        number: '',
+                        carrier: '中国移动',
+                        status: 'active',
+                        packageType: '',
+                        monthlyFee: 0,
+                        owner: '',
+                        purpose: []
+                    };
+                },
+                
+                getEmptyAccountForm() {
+                    return {
+                        phoneId: '',
+                        platform: '抖音',
+                        accountName: '',
+                        accountId: '',
+                        purpose: 'main',
+                        status: 'normal',
+                        followers: 0,
+                        notes: ''
+                    };
+                },
+                
+                getEmptyBillForm() {
+                    return {
+                        phoneId: '',
+                        yearMonth: new Date().toISOString().slice(0, 7),
+                        baseFee: 0,
+                        extraFee: 0,
+                        totalFee: 0,
+                        rechargeAmount: 0,
+                        balance: 0
+                    };
+                },
+
+                openPhoneModal(phone = null) {
+                    if (phone) {
+                        this.editingPhone = phone;
+                        this.phoneForm = { ...phone };
+                    } else {
+                        this.editingPhone = null;
+                        this.phoneForm = this.getEmptyPhoneForm();
+                    }
+                    this.showPhoneModal = true;
+                },
+                
+                closePhoneModal() {
+                    this.showPhoneModal = false;
+                    this.phoneForm = this.getEmptyPhoneForm();
+                    this.editingPhone = null;
+                },
+                
+                async savePhone() {
+                    try {
+                        if (!this.phoneForm.number || this.phoneForm.number.length !== 11) {
+                            this.showToast('请输入正确的11位手机号', 'error');
+                            return;
+                        }
+                        
+                        const phoneData = {
+                            ...this.phoneForm,
+                            totalFee: this.phoneForm.monthlyFee || 0,
+                            updatedAt: new Date().toISOString()
+                        };
+                        
+                        if (this.editingPhone) {
+                            phoneData.id = this.editingPhone.id;
+                            await this.db.update('phones', phoneData);
+                            const index = this.phones.findIndex(p => p.id === phoneData.id);
+                            if (index !== -1) {
+                                this.phones[index] = phoneData;
+                            }
+                            // 同时更新全量数据
+                            const allIndex = this.allPhonesData.findIndex(p => p.id === phoneData.id);
+                            if (allIndex !== -1) {
+                                this.allPhonesData[allIndex] = phoneData;
+                            }
+                        } else {
+                            phoneData.id = this.generateId();
+                            phoneData.createdAt = new Date().toISOString();
+                            await this.db.add('phones', phoneData);
+                            this.phones.push(phoneData);
+                            this.allPhonesData.push(phoneData);
+                            this.totalDataCount++;
+                            this.loadedDataCount++;
+                        }
+                        
+                        this.buildMaps();
+                        this.closePhoneModal();
+                        this.showToast('保存成功');
+                    } catch (error) {
+                        console.error('保存手机号失败:', error);
+                        this.showToast('保存失败: ' + error.message, 'error');
+                    }
+                },
+                
+                editPhone(phone) {
+                    this.openPhoneModal(phone);
+                },
+                
+                async deletePhone(id) {
+                    if (!confirm('确定删除该号码吗？相关的账号和账单也会被删除。')) return;
+                    
+                    await this.db.delete('phones', id);
+                    this.phones = this.phones.filter(p => p.id !== id);
+                    this.allPhonesData = this.allPhonesData.filter(p => p.id !== id);
+                    
+                    const relatedAccounts = this.accounts.filter(a => a.phoneId === id);
+                    for (const account of relatedAccounts) {
+                        await this.db.delete('accounts', account.id);
+                    }
+                    this.accounts = this.accounts.filter(a => a.phoneId !== id);
+                    
+                    const relatedBills = this.bills.filter(b => b.phoneId === id);
+                    for (const bill of relatedBills) {
+                        await this.db.delete('bills', bill.id);
+                    }
+                    this.bills = this.bills.filter(b => b.phoneId !== id);
+                    
+                    this.totalDataCount--;
+                    this.loadedDataCount--;
+                    this.remainingCount = Math.max(0, this.totalDataCount - this.loadedDataCount);
+                    
+                    this.buildMaps();
+                    this.showToast('删除成功');
+                },
+
+                // 生成批量测试数据（优化版）
+                async generateBatchTestData() {
+                    const startTime = Date.now();
+                    const batchCount = this.batchSize;
+                    
+                    const transaction = this.db.db.transaction(['phones'], 'readwrite');
+                    const phoneStore = transaction.objectStore('phones');
+                    
+                    const phonePromises = [];
+                    const carriers = ['中国移动', '中国联通', '中国电信'];
+                    const packageTypes = ['畅享套餐', '5G套餐', '流量王', '商务套餐', '学生套餐'];
+                    const owners = ['张三', '李四', '王五', '赵六', '陈七', '刘八'];
+                    const statuses = ['active', 'active', 'active', 'inactive', 'cancelled'];
+                    
+                    for (let i = 0; i < batchCount; i++) {
+                        const phone = {
+                            id: this.generateId(),
+                            number: `1${3 + Math.floor(Math.random() * 7)}${Math.random().toString().slice(2, 11)}`,
+                            carrier: carriers[Math.floor(Math.random() * carriers.length)],
+                            status: statuses[Math.floor(Math.random() * statuses.length)],
+                            packageType: packageTypes[Math.floor(Math.random() * packageTypes.length)],
+                            monthlyFee: Math.floor(Math.random() * 200) + 50,
+                            owner: owners[Math.floor(Math.random() * owners.length)],
+                            purpose: [],
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString()
+                        };
+                        
+                        phonePromises.push(phoneStore.add(phone));
+                        this.phones.push(phone);
+                        this.allPhonesData.push(phone);
+                    }
+                    
+                    await Promise.all(phonePromises);
+                    
+                    this.totalDataCount += batchCount;
+                    this.loadedDataCount += batchCount;
+                    this.buildMaps();
+                    
+                    const endTime = Date.now();
+                    const duration = ((endTime - startTime) / 1000).toFixed(2);
+                    
+                    this.showToast(`生成${batchCount}条测试数据成功，耗时${duration}秒`);
+                },
+
+                // 其他方法保持原样...
+                openAccountModal(account = null) {
+                    if (account) {
+                        this.editingAccount = account;
+                        this.accountForm = { ...account };
+                    } else {
+                        this.editingAccount = null;
+                        this.accountForm = this.getEmptyAccountForm();
+                        // 根据当前筛选模式设置默认值
+                        if (this.accountFilterMode === 'phone' && this.selectedPhoneForAccount) {
+                            this.accountForm.phoneId = this.selectedPhoneForAccount;
+                        }
+                        if (this.accountFilterMode === 'platform' && this.selectedPlatform) {
+                            this.accountForm.platform = this.selectedPlatform;
+                        }
+                    }
+                    this.showAccountModal = true;
+                },
+                
+                closeAccountModal() {
+                    this.showAccountModal = false;
+                    this.accountForm = this.getEmptyAccountForm();
+                    this.editingAccount = null;
+                },
+
+                async saveAccount() {
+                    if (!this.accountForm.phoneId || !this.accountForm.accountName) {
+                        this.showToast('请填写必要信息', 'error');
+                        return;
+                    }
+                    
+                    const accountData = {
+                        ...this.accountForm,
+                        followers: parseInt(this.accountForm.followers) || 0,
+                        updatedAt: new Date().toISOString()
+                    };
+                    
+                    try {
+                        if (this.editingAccount) {
+                            accountData.id = this.editingAccount.id;
+                            await this.db.update('accounts', accountData);
+                            const index = this.accounts.findIndex(a => a.id === accountData.id);
+                            if (index !== -1) {
+                                this.accounts[index] = accountData;
+                            }
+                        } else {
+                            accountData.id = this.generateId();
+                            accountData.createdAt = new Date().toISOString();
+                            await this.db.add('accounts', accountData);
+                            this.accounts.push(accountData);
+                        }
+                        
+                        this.buildMaps();
+                        this.closeAccountModal();
+                        this.showToast('保存成功');
+                    } catch (error) {
+                        console.error('保存账号失败:', error);
+                        this.showToast('保存失败: ' + error.message, 'error');
+                    }
+                },
+                
+                editAccount(account) {
+                    this.openAccountModal(account);
+                },
+                
+                async deleteAccount(id) {
+                    if (!confirm('确定删除该账号吗？')) return;
+                    
+                    await this.db.delete('accounts', id);
+                    this.accounts = this.accounts.filter(a => a.id !== id);
+                    this.buildMaps();
+                    this.showToast('删除成功');
+                },
+
+                openBillModal(bill = null) {
+                    if (bill) {
+                        this.editingBill = bill;
+                        this.billForm = { ...bill };
+                    } else {
+                        this.editingBill = null;
+                        this.billForm = this.getEmptyBillForm();
+                    }
+                    this.showBillModal = true;
+                },
+                
+                closeBillModal() {
+                    this.showBillModal = false;
+                    this.billForm = this.getEmptyBillForm();
+                    this.editingBill = null;
+                },
+                
+                async saveBill() {
+                    if (!this.billForm.phoneId) {
+                        this.showToast('请选择手机号', 'error');
+                        return;
+                    }
+                    
+                    const billData = {
+                        ...this.billForm,
+                        totalFee: this.billForm.baseFee + this.billForm.extraFee,
+                        updatedAt: new Date().toISOString()
+                    };
+                    
+                    if (this.editingBill) {
+                        billData.id = this.editingBill.id;
+                        await this.db.update('bills', billData);
+                        const index = this.bills.findIndex(b => b.id === billData.id);
+                        if (index !== -1) {
+                            this.bills[index] = billData;
+                        }
+                    } else {
+                        billData.id = this.generateId();
+                        billData.createdAt = new Date().toISOString();
+                        await this.db.add('bills', billData);
+                        this.bills.push(billData);
+                    }
+                    
+                    this.closeBillModal();
+                    this.updateCharts();
+                    this.showToast('保存成功');
+                },
+                
+                editBill(bill) {
+                    this.openBillModal(bill);
+                },
+                
+                async deleteBill(id) {
+                    if (!confirm('确定删除该账单吗？')) return;
+                    
+                    await this.db.delete('bills', id);
+                    this.bills = this.bills.filter(b => b.id !== id);
+                    this.updateCharts();
+                    this.showToast('删除成功');
+                },
+
+                // 导入导出功能
+                async importPhones() {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.json';
+                    input.onchange = async (e) => {
+                        const file = e.target.files[0];
+                        const text = await file.text();
+                        try {
+                            const data = JSON.parse(text);
+                            for (const phone of data) {
+                                phone.id = this.generateId();
+                                phone.createdAt = new Date().toISOString();
+                                phone.updatedAt = new Date().toISOString();
+                                await this.db.add('phones', phone);
+                                this.phones.push(phone);
+                                this.allPhonesData.push(phone);
+                            }
+                            this.totalDataCount += data.length;
+                            this.loadedDataCount += data.length;
+                            this.buildMaps();
+                            this.showToast(`成功导入 ${data.length} 个号码`);
+                        } catch (error) {
+                            this.showToast('导入失败，请检查文件格式', 'error');
+                        }
+                    };
+                    input.click();
+                },
+                
+                exportPhones() {
+                    const data = JSON.stringify(this.phones, null, 2);
+                    this.downloadFile(data, 'phones.json', 'application/json');
+                    this.showToast('导出成功');
+                },
+                
+                async importBills() {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.json';
+                    input.onchange = async (e) => {
+                        const file = e.target.files[0];
+                        const text = await file.text();
+                        try {
+                            const data = JSON.parse(text);
+                            for (const bill of data) {
+                                bill.id = this.generateId();
+                                bill.createdAt = new Date().toISOString();
+                                bill.updatedAt = new Date().toISOString();
+                                await this.db.add('bills', bill);
+                                this.bills.push(bill);
+                            }
+                            this.updateCharts();
+                            this.showToast(`成功导入 ${data.length} 条账单`);
+                        } catch (error) {
+                            this.showToast('导入失败，请检查文件格式', 'error');
+                        }
+                    };
+                    input.click();
+                },
+                
+                exportBillReport() {
+                    const report = {
+                        month: this.selectedMonth,
+                        bills: this.filteredBills,
+                        summary: {
+                            total: this.filteredBills.reduce((sum, b) => sum + b.totalFee, 0),
+                            baseFee: this.filteredBills.reduce((sum, b) => sum + b.baseFee, 0),
+                            extraFee: this.filteredBills.reduce((sum, b) => sum + b.extraFee, 0),
+                            recharge: this.filteredBills.reduce((sum, b) => sum + b.rechargeAmount, 0)
+                        }
+                    };
+                    
+                    const data = JSON.stringify(report, null, 2);
+                    this.downloadFile(data, `bill-report-${this.selectedMonth}.json`, 'application/json');
+                    this.showToast('报表生成成功');
+                },
+
+                // 数据备份恢复
+                async backupData() {
+                    const backup = {
+                        version: '3.0',
+                        timestamp: new Date().toISOString(),
+                        data: {
+                            phones: this.allPhonesData,
+                            accounts: this.accounts,
+                            bills: this.bills,
+                            settings: this.settings
+                        }
+                    };
+                    
+                    const data = JSON.stringify(backup, null, 2);
+                    this.downloadFile(data, `backup-${new Date().toISOString().slice(0, 10)}.json`, 'application/json');
+                    this.showToast('备份成功');
+                },
+                
+                async restoreData() {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.json';
+                    input.onchange = async (e) => {
+                        const file = e.target.files[0];
+                        const text = await file.text();
+                        try {
+                            const backup = JSON.parse(text);
+                            
+                            if (!backup.data) {
+                                throw new Error('无效的备份文件');
+                            }
+                            
+                            // 清空现有数据
+                            await this.db.clear('phones');
+                            await this.db.clear('accounts');
+                            await this.db.clear('bills');
+                            
+                            // 恢复数据（批量操作优化）
+                            const transaction = this.db.db.transaction(['phones', 'accounts', 'bills'], 'readwrite');
+                            const phoneStore = transaction.objectStore('phones');
+                            const accountStore = transaction.objectStore('accounts');
+                            const billStore = transaction.objectStore('bills');
+                            
+                            const promises = [];
+                            
+                            for (const phone of backup.data.phones || []) {
+                                promises.push(phoneStore.add(phone));
+                            }
+                            
+                            for (const account of backup.data.accounts || []) {
+                                promises.push(accountStore.add(account));
+                            }
+                            
+                            for (const bill of backup.data.bills || []) {
+                                promises.push(billStore.add(bill));
+                            }
+                            
+                            await Promise.all(promises);
+                            
+                            if (backup.data.settings) {
+                                await this.db.update('settings', {
+                                    key: 'general',
+                                    value: backup.data.settings
+                                });
+                            }
+                            
+                            // 重新加载数据
+                            this.allPhonesData = backup.data.phones || [];
+                            this.phones = this.allPhonesData.slice(0, this.batchSize);
+                            this.accounts = backup.data.accounts || [];
+                            this.bills = backup.data.bills || [];
+                            this.settings = backup.data.settings || {};
+                            
+                            this.totalDataCount = this.allPhonesData.length;
+                            this.loadedDataCount = this.phones.length;
+                            this.hasMoreData = this.loadedDataCount < this.totalDataCount;
+                            this.remainingCount = this.totalDataCount - this.loadedDataCount;
+                            
+                            this.buildMaps();
+                            this.updateCharts();
+                            this.showToast('恢复成功');
+                        } catch (error) {
+                            this.showToast('恢复失败，请检查文件格式', 'error');
+                        }
+                    };
+                    input.click();
+                },
+                
+                async clearData() {
+                    if (!confirm('确定要清空所有数据吗？此操作不可恢复！')) return;
+                    
+                    await this.db.clear('phones');
+                    await this.db.clear('accounts');
+                    await this.db.clear('bills');
+                    
+                    this.phones = [];
+                    this.accounts = [];
+                    this.bills = [];
+                    this.allPhonesData = [];
+                    this.totalDataCount = 0;
+                    this.loadedDataCount = 0;
+                    this.hasMoreData = false;
+                    this.remainingCount = 0;
+                    
+                    this.buildMaps();
+                    this.updateCharts();
+                    this.showToast('数据已清空');
+                },
+
+                // 工具方法
+                generateId() {
+                    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+                },
+                
+                getStatusColor(status) {
+                    const colors = {
+                        active: '#4caf50',
+                        inactive: '#ff9800',
+                        cancelled: '#f44336'
+                    };
+                    return colors[status] || '#999';
+                },
+                
+                getAccountStatusColor(status) {
+                    const colors = {
+                        normal: '#4caf50',
+                        restricted: '#ff9800',
+                        banned: '#f44336'
+                    };
+                    return colors[status] || '#999';
+                },
+                
+                showToast(message, type = 'success') {
+                    this.toast = {
+                        show: true,
+                        message,
+                        type
+                    };
+                    
+                    if (this.toastTimer) {
+                        clearTimeout(this.toastTimer);
+                    }
+                    
+                    this.toastTimer = setTimeout(() => {
+                        this.toast.show = false;
+                        this.toastTimer = null;
+                    }, 3000);
+                },
+                
+                downloadFile(content, filename, type) {
+                    const blob = new Blob([content], { type });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                }
+            },
+
+            created() {
+                // 初始化防抖搜索
+                this.visibleCount = Math.ceil(this.containerHeight / this.itemHeight);
+            },
+
+            async mounted() {
+                // 启动应用
+                await this.initApp();
+            },
+
+            beforeUnmount() {
+                // 清理资源防止内存泄漏
+                if (this.costChart) {
+                    this.costChart.destroy();
+                    this.costChart = null;
+                }
+                if (this.billChart) {
+                    this.billChart.destroy();
+                    this.billChart = null;
+                }
+                
+                // 清理定时器
+                if (this.searchDebounceTimer) {
+                    clearTimeout(this.searchDebounceTimer);
+                }
+                if (this.toastTimer) {
+                    clearTimeout(this.toastTimer);
+                }
+                
+                // 停止FPS监控
+                this.stopFPSMonitor();
+                
+                // 清理Map索引
+                this.phoneMap.clear();
+                this.accountsByPhoneMap.clear();
+            },
+
+            watch: {
+                // 监听数据变化，重建索引
+                phones: {
+                    deep: true,
+                    handler() {
+                        this.buildMaps();
+                    }
+                },
+                accounts: {
+                    deep: true,
+                    handler() {
+                        this.buildMaps();
+                    }
+                }
+            }
+        });
+
+        app.mount('#app');
+    </script>
+
+    <!-- 非关键CSS异步加载 -->
+    <style>
+        /* 虚拟滚动容器样式 */
+        .virtual-scroll-container {
+            height: 600px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .virtual-scroll-spacer {
+            position: relative;
+        }
+
+        .virtual-scroll-items {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+        }
+
+        .virtual-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            border-bottom: 1px solid #e5e5e5;
+            transition: background 0.2s;
+        }
+
+        .virtual-item:hover {
+            background: #f9f9f9;
+        }
+
+        /* 性能指示器 */
+        .performance-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        .performance-metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+
+        .performance-value {
+            color: #4caf50;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            animation: slideInRight 0.3s;
+            z-index: 2000;
+        }
+
+        .toast.success {
+            background: #4caf50;
+        }
+
+        .toast.error {
+            background: #f44336;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* 账号关联增强样式 */
+        .enhanced-search-bar {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-mode-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .filter-mode-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .filter-mode-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        .filter-mode-btn.active:hover {
+            background: linear-gradient(135deg, #5a6fd8, #6a4190);
+        }
+        
+        .account-card {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+        
+        .account-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .account-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .platform-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .quick-query-card {
+            background: linear-gradient(135deg, #4caf50, #45a049) !important;
+        }
+        
+        .quick-query-card input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .quick-query-card input:focus {
+            outline: none;
+            border-color: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.15);
+        }
+        
+        /* 平台特色样式 */
+        .platform-douyin {
+            border-left-color: #fe2c55;
+        }
+        
+        .platform-kuaishou {
+            border-left-color: #ff6600;
+        }
+        
+        .platform-xiaohongshu {
+            border-left-color: #ff2442;
+        }
+        
+        .platform-bilibili {
+            border-left-color: #00aeec;
+        }
+        
+        .platform-weixinshipinhao {
+            border-left-color: #07c160;
+        }
+        
+        .platform-zhihu {
+            border-left-color: #0066ff;
+        }
+        
+        .platform-weibo {
+            border-left-color: #e6162d;
+        }
+        
+        .platform-jinritoutiao {
+            border-left-color: #ff4500;
+        }
+        
+        .platform-youtube {
+            border-left-color: #ff0000;
+        }
+        
+        .platform-tiktok {
+            border-left-color: #000000;
+        }
+        
+        /* 响应式优化 */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .enhanced-search-bar {
+                padding: 15px;
+            }
+            
+            .filter-mode-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            
+            .account-card {
+                margin-bottom: 15px;
+            }
+            
+            .account-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .search-bar {
+                flex-direction: column;
+            }
+            
+            .search-input {
+                margin-bottom: 10px;
+            }
+        }
+        
+        /* 加载动画 */
+        .loading-accounts {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 50px;
+            color: #666;
+        }
+        
+        .loading-accounts::after {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ddd;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</body>
+</html>
