@@ -241,10 +241,6 @@
                     <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                         <button class="btn btn-primary" @click="openPhoneModal()">添加号码</button>
                         <button class="btn btn-primary" @click="openBillModal()">录入账单</button>
-                        <button class="btn btn-primary" @click="batchLoadData">分批加载数据({{ batchSize }}条)</button>
-                        <button class="btn btn-primary" @click="togglePerformance">
-                            {{ showPerformance ? '隐藏' : '显示' }}性能指标
-                        </button>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px;">
@@ -1462,22 +1458,48 @@
                         
                         if (this.editingPhone) {
                             phoneData.id = this.editingPhone.id;
-                            await this.db.update('phones', phoneData);
-                            const index = this.phones.findIndex(p => p.id === phoneData.id);
+                            phoneData.createdAt = this.editingPhone.createdAt;
+                            // 创建一个干净的对象副本，避免DataCloneError
+                            const cleanPhoneData = {
+                                id: phoneData.id,
+                                number: phoneData.number,
+                                carrier: phoneData.carrier,
+                                plan: phoneData.plan,
+                                monthlyFee: phoneData.monthlyFee,
+                                status: phoneData.status,
+                                notes: phoneData.notes,
+                                totalFee: phoneData.totalFee,
+                                createdAt: phoneData.createdAt,
+                                updatedAt: phoneData.updatedAt
+                            };
+                            await this.db.update('phones', cleanPhoneData);
+                            const index = this.phones.findIndex(p => p.id === cleanPhoneData.id);
                             if (index !== -1) {
-                                this.phones[index] = phoneData;
+                                this.phones[index] = cleanPhoneData;
                             }
                             // 同时更新全量数据
-                            const allIndex = this.allPhonesData.findIndex(p => p.id === phoneData.id);
+                            const allIndex = this.allPhonesData.findIndex(p => p.id === cleanPhoneData.id);
                             if (allIndex !== -1) {
-                                this.allPhonesData[allIndex] = phoneData;
+                                this.allPhonesData[allIndex] = cleanPhoneData;
                             }
                         } else {
                             phoneData.id = this.generateId();
                             phoneData.createdAt = new Date().toISOString();
-                            await this.db.add('phones', phoneData);
-                            this.phones.push(phoneData);
-                            this.allPhonesData.push(phoneData);
+                            // 创建一个干净的对象副本，避免DataCloneError
+                            const cleanPhoneData = {
+                                id: phoneData.id,
+                                number: phoneData.number,
+                                carrier: phoneData.carrier,
+                                plan: phoneData.plan,
+                                monthlyFee: phoneData.monthlyFee,
+                                status: phoneData.status,
+                                notes: phoneData.notes,
+                                totalFee: phoneData.totalFee,
+                                createdAt: phoneData.createdAt
+                            };
+                            await this.db.add('phones', cleanPhoneData);
+                            this.phones.push(cleanPhoneData);
+                            this.allPhonesData.push(cleanPhoneData);
                             this.totalDataCount++;
                             this.loadedDataCount++;
                         }
