@@ -127,6 +127,299 @@
             height: 400px;
             border-radius: 8px;
         }
+
+        /* ===== 登录界面样式 ===== */
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            margin: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            font-size: 24px;
+            color: #333;
+            margin: 0 0 10px 0;
+            font-weight: 600;
+        }
+
+        .version-badge {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .login-form {
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px 45px 15px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group .input-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .form-group .input-icon:hover {
+            color: #667eea;
+        }
+
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .form-options label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .form-options input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .form-options a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .form-options a:hover {
+            text-decoration: underline;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-footer {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .login-footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* 错误提示 */
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+            border: 1px solid #fcc;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* 成功提示 */
+        .success-message {
+            background: #efe;
+            color: #373;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+            border: 1px solid #cfc;
+        }
+
+        /* 验证码 */
+        .captcha-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .captcha-container input {
+            flex: 1;
+        }
+
+        .captcha-image {
+            width: 120px;
+            height: 40px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f9f9f9;
+            font-family: monospace;
+            font-weight: bold;
+            color: #666;
+            user-select: none;
+        }
+
+        /* 加载状态 */
+        .login-loading {
+            position: relative;
+        }
+
+        .login-loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 登录成功过渡 */
+        .login-success {
+            animation: fadeOut 0.5s forwards;
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 30px 20px;
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .login-header h1 {
+                font-size: 20px;
+            }
+            
+            .form-group input {
+                padding: 12px 40px 12px 12px;
+                font-size: 14px;
+            }
+            
+            .login-btn {
+                padding: 12px;
+                font-size: 14px;
+            }
+        }
+
+        /* 隐藏主应用 */
+        .app-hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -136,6 +429,86 @@
     </div>
 
     <div id="app">
+        <!-- 登录界面 -->
+        <div v-if="showLoginPage" class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <h1>手机号码管理系统</h1>
+                    <span class="version-badge">v3.0 快速启动版</span>
+                </div>
+                
+                <!-- 错误提示 -->
+                <div v-if="loginError" class="error-message">
+                    {{ loginError }}
+                </div>
+                
+                <!-- 成功提示 -->
+                <div v-if="loginSuccess" class="success-message">
+                    {{ loginSuccess }}
+                </div>
+                
+                <form @submit.prevent="handleLogin" class="login-form">
+                    <div class="form-group">
+                        <input 
+                            type="text" 
+                            v-model="loginForm.username"
+                            placeholder="用户名/手机号/邮箱"
+                            required
+                            :disabled="loginLoading">
+                        <span class="input-icon">👤</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <input 
+                            :type="showPassword ? 'text' : 'password'"
+                            v-model="loginForm.password"
+                            placeholder="密码"
+                            required
+                            :disabled="loginLoading">
+                        <span class="input-icon" @click="togglePassword">
+                            {{ showPassword ? '🙈' : '👁️' }}
+                        </span>
+                    </div>
+                    
+                    <!-- 验证码（失败3次后显示） -->
+                    <div v-if="showCaptcha" class="form-group">
+                        <div class="captcha-container">
+                            <input 
+                                type="text" 
+                                v-model="loginForm.captcha"
+                                placeholder="验证码"
+                                required
+                                :disabled="loginLoading">
+                            <div class="captcha-image" @click="refreshCaptcha">
+                                {{ captchaText }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-options">
+                        <label>
+                            <input type="checkbox" v-model="loginForm.rememberMe" :disabled="loginLoading">
+                            记住我
+                        </label>
+                        <a href="#" @click.prevent="showForgotPassword">忘记密码？</a>
+                    </div>
+                    
+                    <button 
+                        type="submit" 
+                        class="login-btn"
+                        :class="{ 'login-loading': loginLoading }"
+                        :disabled="loginLoading">
+                        {{ loginLoading ? '' : '登录' }}
+                    </button>
+                </form>
+                
+                <div class="login-footer">
+                    <p>还没有账户？<a href="#" @click.prevent="showRegister">立即注册</a></p>
+                    <p style="margin-top: 10px;"><a href="#" @click.prevent="guestLogin">游客模式</a></p>
+                </div>
+            </div>
+        </div>
+
         <!-- 骨架屏 -->
         <div v-if="isLoading" class="skeleton-container">
             <div class="skeleton skeleton-header"></div>
@@ -144,7 +517,7 @@
         </div>
 
         <!-- 实际内容 -->
-        <div v-show="!isLoading">
+        <div v-show="!isLoading && !showLoginPage">
             <!-- 性能指示器 -->
             <div class="performance-indicator" v-if="showPerformance">
                 <div class="performance-metric">
@@ -174,6 +547,23 @@
                     <h1 style="display: inline-block;">手机号码管理系统</h1>
                     <span class="version-badge" style="margin-left: 15px;">v3.0 快速启动版</span>
                 </div>
+                
+                <!-- 用户信息和退出按钮 -->
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span style="color: #666; font-size: 14px;">
+                        欢迎，{{ currentUser ? currentUser.username : 'Guest' }}
+                        <span v-if="currentUser && currentUser.role === 'admin'" style="color: #f5576c;">[管理员]</span>
+                    </span>
+                    <button 
+                        class="btn btn-sm" 
+                        style="background: #f5576c; color: white; border: none; padding: 5px 12px; border-radius: 4px;"
+                        @click="logout">
+                        退出登录
+                    </button>
+                </div>
+            </div>
+            
+            <div class="header">
                 <div class="nav-tabs">
                     <button class="nav-tab" :class="{active: currentTab === 'dashboard'}" @click="switchTab('dashboard')">
                         仪表盘
@@ -663,8 +1053,8 @@
         class Database {
             constructor() {
                 this.db = null;
-                this.dbName = 'PhoneManagementDB';
-                this.version = 3;
+                this.dbName = 'PhoneManagementDB_Auth'; // 新的数据库名避免版本冲突
+                this.version = 1;
             }
 
             async init() {
@@ -700,6 +1090,25 @@
 
                         if (!db.objectStoreNames.contains('settings')) {
                             db.createObjectStore('settings', { keyPath: 'key' });
+                        }
+                        
+                        // 新增用户存储
+                        if (!db.objectStoreNames.contains('users')) {
+                            const userStore = db.createObjectStore('users', { keyPath: 'id', autoIncrement: true });
+                            userStore.createIndex('username', 'username', { unique: true });
+                            userStore.createIndex('email', 'email', { unique: false });
+                        }
+                        
+                        // 新增登录日志存储
+                        if (!db.objectStoreNames.contains('loginLogs')) {
+                            const logStore = db.createObjectStore('loginLogs', { keyPath: 'id', autoIncrement: true });
+                            logStore.createIndex('userId', 'userId');
+                            logStore.createIndex('loginTime', 'loginTime');
+                        }
+                        
+                        // 新增安全设置存储
+                        if (!db.objectStoreNames.contains('security')) {
+                            db.createObjectStore('security', { keyPath: 'key' });
                         }
                     };
                 });
@@ -770,6 +1179,28 @@
         const app = createApp({
             data() {
                 return {
+                    // 登录状态
+                    showLoginPage: true,
+                    isLoggedIn: false,
+                    currentUser: null,
+                    
+                    // 登录表单
+                    loginForm: {
+                        username: '',
+                        password: '',
+                        captcha: '',
+                        rememberMe: false
+                    },
+                    
+                    // 登录界面状态
+                    loginLoading: false,
+                    loginError: '',
+                    loginSuccess: '',
+                    showPassword: false,
+                    showCaptcha: false,
+                    captchaText: '',
+                    loginFailCount: 0,
+                    
                     // 加载状态
                     isLoading: true,
                     chartsLoaded: false,
@@ -994,6 +1425,298 @@
             },
 
             methods: {
+                // ===== 登录相关方法 =====
+                
+                // 密码加密
+                hashPassword(password) {
+                    // 简单的hash实现
+                    return btoa(password + 'PhoneManagementSalt2024');
+                },
+                
+                // 生成验证码
+                generateCaptcha() {
+                    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                    let result = '';
+                    for (let i = 0; i < 4; i++) {
+                        result += chars.charAt(Math.floor(Math.random() * chars.length));
+                    }
+                    this.captchaText = result;
+                    return result;
+                },
+                
+                // 刷新验证码
+                refreshCaptcha() {
+                    this.generateCaptcha();
+                    this.loginForm.captcha = '';
+                },
+                
+                // 切换密码显示
+                togglePassword() {
+                    this.showPassword = !this.showPassword;
+                },
+                
+                // 检查登录状态
+                async checkLoginStatus() {
+                    try {
+                        // 检查会话存储
+                        const sessionUser = sessionStorage.getItem('currentUser');
+                        if (sessionUser) {
+                            this.currentUser = JSON.parse(sessionUser);
+                            this.isLoggedIn = true;
+                            this.showLoginPage = false;
+                            return true;
+                        }
+                        
+                        // 检查记住我功能
+                        const savedUser = localStorage.getItem('rememberedUser');
+                        if (savedUser) {
+                            const userData = JSON.parse(savedUser);
+                            const user = await this.getUserByUsername(userData.username);
+                            if (user && user.password === userData.password) {
+                                this.currentUser = user;
+                                this.isLoggedIn = true;
+                                this.showLoginPage = false;
+                                sessionStorage.setItem('currentUser', JSON.stringify(user));
+                                return true;
+                            } else {
+                                // 清除无效的记住我数据
+                                localStorage.removeItem('rememberedUser');
+                            }
+                        }
+                        
+                        return false;
+                    } catch (error) {
+                        console.error('检查登录状态失败:', error);
+                        return false;
+                    }
+                },
+                
+                // 根据用户名获取用户
+                async getUserByUsername(username) {
+                    try {
+                        const users = await this.db.getAll('users');
+                        return users.find(u => 
+                            u.username === username || 
+                            u.email === username || 
+                            u.phone === username
+                        );
+                    } catch (error) {
+                        console.error('获取用户失败:', error);
+                        return null;
+                    }
+                },
+                
+                // 创建默认管理员账户
+                async createDefaultAdmin() {
+                    try {
+                        const existingAdmin = await this.getUserByUsername('admin');
+                        if (!existingAdmin) {
+                            const defaultAdmin = {
+                                username: 'admin',
+                                password: this.hashPassword('admin123'),
+                                email: 'admin@example.com',
+                                phone: '13800138000',
+                                role: 'admin',
+                                createdAt: new Date().toISOString(),
+                                lastLogin: null,
+                                loginCount: 0,
+                                settings: {
+                                    theme: 'default',
+                                    rememberMe: true,
+                                    autoLock: false
+                                }
+                            };
+                            await this.db.add('users', defaultAdmin);
+                            console.log('默认管理员账户创建成功');
+                        }
+                    } catch (error) {
+                        console.error('创建默认管理员账户失败:', error);
+                    }
+                },
+                
+                // 记录登录日志
+                async logLogin(userId, success, failReason = null) {
+                    try {
+                        const loginLog = {
+                            userId: userId,
+                            loginTime: new Date().toISOString(),
+                            loginIp: 'local',
+                            userAgent: navigator.userAgent,
+                            success: success,
+                            failReason: failReason
+                        };
+                        await this.db.add('loginLogs', loginLog);
+                    } catch (error) {
+                        console.error('记录登录日志失败:', error);
+                    }
+                },
+                
+                // 处理登录
+                async handleLogin() {
+                    this.loginError = '';
+                    this.loginSuccess = '';
+                    
+                    // 表单验证
+                    if (!this.loginForm.username || !this.loginForm.password) {
+                        this.loginError = '请填写用户名和密码';
+                        return;
+                    }
+                    
+                    // 验证码检查
+                    if (this.showCaptcha) {
+                        if (!this.loginForm.captcha) {
+                            this.loginError = '请输入验证码';
+                            return;
+                        }
+                        if (this.loginForm.captcha.toUpperCase() !== this.captchaText.toUpperCase()) {
+                            this.loginError = '验证码错误';
+                            this.refreshCaptcha();
+                            return;
+                        }
+                    }
+                    
+                    this.loginLoading = true;
+                    
+                    try {
+                        // 获取用户
+                        const user = await this.getUserByUsername(this.loginForm.username);
+                        if (!user) {
+                            throw new Error('用户不存在');
+                        }
+                        
+                        // 验证密码
+                        const inputPasswordHash = this.hashPassword(this.loginForm.password);
+                        if (user.password !== inputPasswordHash) {
+                            throw new Error('密码错误');
+                        }
+                        
+                        // 登录成功
+                        this.currentUser = user;
+                        this.isLoggedIn = true;
+                        this.loginSuccess = '登录成功！';
+                        
+                        // 更新用户登录信息
+                        user.lastLogin = new Date().toISOString();
+                        user.loginCount = (user.loginCount || 0) + 1;
+                        await this.db.update('users', user);
+                        
+                        // 记录成功登录日志
+                        await this.logLogin(user.id, true);
+                        
+                        // 重置失败计数
+                        this.loginFailCount = 0;
+                        
+                        // 处理记住我功能
+                        if (this.loginForm.rememberMe) {
+                            localStorage.setItem('rememberedUser', JSON.stringify({
+                                username: user.username,
+                                password: user.password
+                            }));
+                        } else {
+                            localStorage.removeItem('rememberedUser');
+                        }
+                        
+                        // 设置会话
+                        sessionStorage.setItem('currentUser', JSON.stringify(user));
+                        
+                        // 延迟跳转到主应用
+                        setTimeout(() => {
+                            this.showLoginPage = false;
+                            this.initApp();
+                        }, 1000);
+                        
+                    } catch (error) {
+                        // 登录失败
+                        this.loginFailCount++;
+                        this.loginError = error.message;
+                        
+                        // 记录失败登录日志
+                        const user = await this.getUserByUsername(this.loginForm.username);
+                        if (user) {
+                            await this.logLogin(user.id, false, error.message);
+                        }
+                        
+                        // 失败3次后显示验证码
+                        if (this.loginFailCount >= 3) {
+                            this.showCaptcha = true;
+                            this.generateCaptcha();
+                        }
+                        
+                        // 失败5次后锁定
+                        if (this.loginFailCount >= 5) {
+                            this.loginError = '登录失败次数过多，请5分钟后再试';
+                            // 这里可以添加更复杂的锁定逻辑
+                        }
+                        
+                        // 清空密码
+                        this.loginForm.password = '';
+                        this.loginForm.captcha = '';
+                        this.refreshCaptcha();
+                    } finally {
+                        this.loginLoading = false;
+                    }
+                },
+                
+                // 登出
+                async logout() {
+                    this.isLoggedIn = false;
+                    this.currentUser = null;
+                    this.showLoginPage = true;
+                    
+                    // 清除会话
+                    sessionStorage.removeItem('currentUser');
+                    
+                    // 重置登录表单
+                    this.loginForm = {
+                        username: '',
+                        password: '',
+                        captcha: '',
+                        rememberMe: false
+                    };
+                    this.loginError = '';
+                    this.loginSuccess = '';
+                    this.showPassword = false;
+                    this.showCaptcha = false;
+                    this.loginFailCount = 0;
+                },
+                
+                // 忘记密码
+                showForgotPassword() {
+                    alert('忘记密码功能开发中...\n\n提示：默认管理员账户\n用户名: admin\n密码: admin123');
+                },
+                
+                // 显示注册
+                showRegister() {
+                    alert('注册功能开发中...\n\n提示：您可以使用默认管理员账户\n用户名: admin\n密码: admin123');
+                },
+                
+                // 游客模式
+                async guestLogin() {
+                    this.loginLoading = true;
+                    this.loginSuccess = '正在以游客模式登录...';
+                    
+                    // 创建游客用户
+                    const guestUser = {
+                        id: 'guest_' + Date.now(),
+                        username: 'guest',
+                        role: 'user',
+                        createdAt: new Date().toISOString(),
+                        lastLogin: new Date().toISOString(),
+                        loginCount: 1
+                    };
+                    
+                    this.currentUser = guestUser;
+                    this.isLoggedIn = true;
+                    
+                    setTimeout(() => {
+                        this.showLoginPage = false;
+                        this.initApp();
+                        this.loginLoading = false;
+                    }, 1500);
+                },
+                
+                // ===== 原有方法 =====
+                
                 // 初始化应用
                 async initApp() {
                     try {
@@ -1801,18 +2524,31 @@
                     this.showToast('备份成功');
                 },
                 
-                async restoreData() {
+                restoreData() {
+                    // 创建文件输入元素
                     const input = document.createElement('input');
                     input.type = 'file';
                     input.accept = '.json';
+                    input.style.display = 'none';
+                    
+                    // 添加到DOM以确保浏览器兼容性
+                    document.body.appendChild(input);
+                    
                     input.onchange = async (e) => {
-                        const file = e.target.files[0];
-                        const text = await file.text();
                         try {
+                            const file = e.target.files[0];
+                            if (!file) {
+                                document.body.removeChild(input);
+                                return;
+                            }
+                            
+                            this.showToast('正在恢复数据，请稍候...', 'info');
+                            
+                            const text = await file.text();
                             const backup = JSON.parse(text);
                             
                             if (!backup.data) {
-                                throw new Error('无效的备份文件');
+                                throw new Error('无效的备份文件格式');
                             }
                             
                             // 清空现有数据
@@ -1821,35 +2557,45 @@
                             await this.db.clear('bills');
                             
                             // 恢复数据（批量操作优化）
-                            const transaction = this.db.db.transaction(['phones', 'accounts', 'bills'], 'readwrite');
-                            const phoneStore = transaction.objectStore('phones');
-                            const accountStore = transaction.objectStore('accounts');
-                            const billStore = transaction.objectStore('bills');
-                            
-                            const promises = [];
-                            
-                            for (const phone of backup.data.phones || []) {
-                                promises.push(phoneStore.add(phone));
+                            if (this.db.db) {
+                                const transaction = this.db.db.transaction(['phones', 'accounts', 'bills'], 'readwrite');
+                                const phoneStore = transaction.objectStore('phones');
+                                const accountStore = transaction.objectStore('accounts');
+                                const billStore = transaction.objectStore('bills');
+                                
+                                const promises = [];
+                                
+                                // 恢复手机号码数据
+                                for (const phone of backup.data.phones || []) {
+                                    promises.push(new Promise((resolve, reject) => {
+                                        const request = phoneStore.add(phone);
+                                        request.onsuccess = () => resolve();
+                                        request.onerror = () => reject(request.error);
+                                    }));
+                                }
+                                
+                                // 恢复账号数据
+                                for (const account of backup.data.accounts || []) {
+                                    promises.push(new Promise((resolve, reject) => {
+                                        const request = accountStore.add(account);
+                                        request.onsuccess = () => resolve();
+                                        request.onerror = () => reject(request.error);
+                                    }));
+                                }
+                                
+                                // 恢复账单数据
+                                for (const bill of backup.data.bills || []) {
+                                    promises.push(new Promise((resolve, reject) => {
+                                        const request = billStore.add(bill);
+                                        request.onsuccess = () => resolve();
+                                        request.onerror = () => reject(request.error);
+                                    }));
+                                }
+                                
+                                await Promise.all(promises);
                             }
                             
-                            for (const account of backup.data.accounts || []) {
-                                promises.push(accountStore.add(account));
-                            }
-                            
-                            for (const bill of backup.data.bills || []) {
-                                promises.push(billStore.add(bill));
-                            }
-                            
-                            await Promise.all(promises);
-                            
-                            if (backup.data.settings) {
-                                await this.db.update('settings', {
-                                    key: 'general',
-                                    value: backup.data.settings
-                                });
-                            }
-                            
-                            // 重新加载数据
+                            // 更新应用数据
                             this.allPhonesData = backup.data.phones || [];
                             this.phones = this.allPhonesData.slice(0, this.batchSize);
                             this.accounts = backup.data.accounts || [];
@@ -1863,12 +2609,36 @@
                             
                             this.buildMaps();
                             this.updateCharts();
-                            this.showToast('恢复成功');
+                            this.showToast(`恢复成功！恢复了 ${this.allPhonesData.length} 个手机号码`, 'success');
+                            
                         } catch (error) {
-                            this.showToast('恢复失败，请检查文件格式', 'error');
+                            console.error('恢复数据失败:', error);
+                            this.showToast('恢复失败：' + (error.message || '请检查文件格式'), 'error');
+                        } finally {
+                            // 清理DOM
+                            if (document.body.contains(input)) {
+                                document.body.removeChild(input);
+                            }
                         }
                     };
-                    input.click();
+                    
+                    // 监听取消事件
+                    input.oncancel = () => {
+                        if (document.body.contains(input)) {
+                            document.body.removeChild(input);
+                        }
+                    };
+                    
+                    // 触发文件选择器
+                    try {
+                        input.click();
+                    } catch (error) {
+                        console.error('无法打开文件选择器:', error);
+                        this.showToast('无法打开文件选择器，请检查浏览器设置', 'error');
+                        if (document.body.contains(input)) {
+                            document.body.removeChild(input);
+                        }
+                    }
                 },
                 
                 async clearData() {
@@ -1949,8 +2719,42 @@
             },
 
             async mounted() {
-                // 启动应用
-                await this.initApp();
+                try {
+                    // 初始化数据库（登录前需要）
+                    console.log('开始初始化数据库...');
+                    await this.db.init();
+                    console.log('数据库初始化完成');
+                    
+                    // 创建默认管理员账户
+                    console.log('创建默认管理员账户...');
+                    await this.createDefaultAdmin();
+                    console.log('默认管理员账户处理完成');
+                    
+                    // 生成初始验证码
+                    this.generateCaptcha();
+                    console.log('验证码生成完成');
+                    
+                    // 检查登录状态
+                    console.log('检查登录状态...');
+                    const isLoggedIn = await this.checkLoginStatus();
+                    
+                    if (isLoggedIn) {
+                        console.log('用户已登录，启动应用');
+                        // 已登录，直接启动应用
+                        await this.initApp();
+                    } else {
+                        console.log('用户未登录，显示登录页面');
+                        // 未登录，显示登录页面
+                        this.showLoginPage = true;
+                        this.isLoading = false; // 隐藏骨架屏
+                    }
+                } catch (error) {
+                    console.error('应用初始化失败:', error);
+                    // 出错时也要显示界面，避免无限加载
+                    this.showLoginPage = true;
+                    this.isLoading = false;
+                    this.loginError = '系统初始化失败，请刷新页面重试';
+                }
             },
 
             beforeUnmount() {

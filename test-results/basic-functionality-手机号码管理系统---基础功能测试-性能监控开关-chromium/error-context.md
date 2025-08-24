@@ -1,0 +1,64 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: "数据总量:"
+      - generic [ref=e7]: "0"
+    - generic [ref=e8]:
+      - generic [ref=e9]: "可见项:"
+      - generic [ref=e10]: "12"
+    - generic [ref=e11]:
+      - generic [ref=e12]: "内存优化:"
+      - generic [ref=e13]: 0%
+    - generic [ref=e14]:
+      - generic [ref=e15]: "FPS:"
+      - generic [ref=e16]: "43"
+    - generic [ref=e17]:
+      - generic [ref=e18]: "加载时间:"
+      - generic [ref=e19]: 8ms
+  - generic [ref=e20]:
+    - generic [ref=e21]:
+      - heading "手机号码管理系统" [level=1] [ref=e22]
+      - generic [ref=e23]: v3.0 体验版
+      - generic [ref=e24]: 限制 8 个号码
+    - generic [ref=e25]:
+      - button "仪表盘" [ref=e26] [cursor=pointer]
+      - button "号码管理" [ref=e27] [cursor=pointer]
+      - button "账号关联" [ref=e28] [cursor=pointer]
+      - button "费用统计" [ref=e29] [cursor=pointer]
+      - button "系统设置" [ref=e30] [cursor=pointer]
+  - generic [ref=e32]:
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - heading "总号码数 (体验版)" [level=3] [ref=e35]:
+          - text: 总号码数
+          - generic [ref=e36]: (体验版)
+        - generic [ref=e37]: 0 / 8
+        - generic [ref=e38]: "活跃: 0"
+        - generic [ref=e41]: "使用率: 0%"
+      - generic [ref=e42]:
+        - heading "本月费用" [level=3] [ref=e43]
+        - generic [ref=e44]: ¥0.00
+        - generic [ref=e45]: 新增
+      - generic [ref=e46]:
+        - heading "关联账号" [level=3] [ref=e47]
+        - generic [ref=e48]: "0"
+        - generic [ref=e49]: 0 个平台
+      - generic [ref=e50]:
+        - heading "快速查询" [level=3] [ref=e51]
+        - generic [ref=e52]:
+          - textbox "输入手机号" [ref=e53]
+          - button "查询" [ref=e54] [cursor=pointer]
+        - generic [ref=e55]: 输入手机号码快速查看关联账号信息
+    - heading "快速操作" [level=3] [ref=e56]
+    - generic [ref=e57]:
+      - button "添加号码 (0/8)" [ref=e58] [cursor=pointer]
+      - button "录入账单" [ref=e59] [cursor=pointer]
+      - button "分批加载数据(50条)" [ref=e60] [cursor=pointer]
+      - button "隐藏性能指标" [active] [ref=e61] [cursor=pointer]
+    - generic [ref=e62]:
+      - heading "费用趋势" [level=3] [ref=e64]
+      - heading "费用构成" [level=3] [ref=e67]
+```

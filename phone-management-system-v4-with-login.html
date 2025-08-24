@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手机号码管理系统 v4.0 - 登录增强版</title>
+    
+    <!-- 预连接和DNS预解析 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    
+    <!-- Element Plus CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    
+    <!-- 关键CSS内联 -->
+    <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* 登录页面样式 */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .login-form-container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            margin: 20px;
+        }
+
+        .login-form-container h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .login-form-container .el-form-item {
+            margin-bottom: 20px;
+        }
+
+        .login-form-container .el-button {
+            width: 100%;
+            height: 45px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .captcha-image {
+            height: 32px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        /* 登录历史样式 */
+        .login-history {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .login-history h3 {
+            margin-bottom: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* 主应用样式 */
+        #app {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .version-badge {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #666;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            min-height: 600px;
+        }
+
+        /* 加载状态样式 */
+        .loading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(0,0,0,0.1);
+            z-index: 9999;
+        }
+
+        .loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .login-form-container {
+                margin: 10px;
+                padding: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 登录页面 -->
+        <div v-if="!isLoggedIn" class="login-container">
+            <div class="login-form-container">
+                <el-form :model="loginForm" :rules="loginRules" ref="loginFormRef">
+                    <h2>手机号码管理系统</h2>
+                    
+                    <el-form-item prop="username">
+                        <el-input 
+                            v-model="loginForm.username" 
+                            placeholder="用户名"
+                            :prefix-icon="User"
+                            size="large"
+                            @keyup.enter="handleLogin">
+                        </el-input>
+                    </el-form-item>
+                    
+                    <el-form-item prop="password">
+                        <el-input 
+                            v-model="loginForm.password" 
+                            type="password"
+                            placeholder="密码"
+                            :prefix-icon="Lock"
+                            size="large"
+                            show-password
+                            @keyup.enter="handleLogin">
+                        </el-input>
+                    </el-form-item>
+                    
+                    <el-form-item prop="captcha" v-if="showCaptcha">
+                        <el-input 
+                            v-model="loginForm.captcha" 
+                            placeholder="验证码"
+                            size="large">
+                            <template #append>
+                                <img 
+                                    :src="captchaUrl" 
+                                    @click="refreshCaptcha" 
+                                    class="captcha-image"
+                                    title="点击刷新验证码" />
+                            </template>
+                        </el-input>
+                    </el-form-item>
+                    
+                    <el-button 
+                        type="primary" 
+                        @click="handleLogin" 
+                        :loading="loginLoading"
+                        size="large">
+                        登录
+                    </el-button>
+                </el-form>
+                
+                <!-- 登录历史（仅管理员可见） -->
+                <div v-if="currentUser && currentUser.role === 'admin'" class="login-history">
+                    <h3>最近登录记录</h3>
+                    <el-table :data="recentLogins" size="small" height="200">
+                        <el-table-column prop="username" label="用户" width="80" />
+                        <el-table-column prop="ip_address" label="IP地址" width="120" />
+                        <el-table-column prop="login_time" label="时间" width="120" />
+                        <el-table-column prop="status" label="状态" width="60">
+                            <template #default="scope">
+                                <el-tag :type="scope.row.status === '成功' ? 'success' : 'danger'" size="small">
+                                    {{ scope.row.status }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主应用界面 -->
+        <template v-if="isLoggedIn">
+            <!-- 加载进度条 -->
+            <div v-if="isLoading" class="loading-progress">
+                <div class="loading-progress-bar" :style="{width: loadingProgress + '%'}"></div>
+            </div>
+
+            <!-- 头部 -->
+            <div class="header">
+                <div>
+                    <h1>手机号码管理系统</h1>
+                    <span class="version-badge">v4.0 登录增强版</span>
+                </div>
+                <div class="user-info">
+                    <span>欢迎，{{ currentUser.username }}</span>
+                    <el-button type="primary" size="small" @click="handleLogout">退出登录</el-button>
+                </div>
+            </div>
+
+            <!-- 导航标签 -->
+            <div class="header">
+                <div class="nav-tabs">
+                    <button 
+                        class="nav-tab" 
+                        :class="{active: currentTab === 'dashboard'}" 
+                        @click="currentTab = 'dashboard'">
+                        仪表板
+                    </button>
+                    <button 
+                        class="nav-tab" 
+                        :class="{active: currentTab === 'phones'}" 
+                        @click="currentTab = 'phones'">
+                        手机号码管理
+                    </button>
+                    <button 
+                        class="nav-tab" 
+                        :class="{active: currentTab === 'bills'}" 
+                        @click="currentTab = 'bills'">
+                        账单管理
+                    </button>
+                    <button 
+                        class="nav-tab" 
+                        :class="{active: currentTab === 'accounts'}" 
+                        @click="currentTab = 'accounts'">
+                        账号管理
+                    </button>
+                </div>
+            </div>
+
+            <!-- 主要内容区域 -->
+            <div class="main-content">
+                <!-- 仪表板 -->
+                <div v-if="currentTab === 'dashboard'">
+                    <h2>数据统计</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0;">
+                        <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 8px;">
+                            <h3>总手机号码</h3>
+                            <p style="font-size: 24px; font-weight: bold;">{{ phoneNumbers.length }}</p>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white; padding: 20px; border-radius: 8px;">
+                            <h3>活跃账单</h3>
+                            <p style="font-size: 24px; font-weight: bold;">{{ bills.length }}</p>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; padding: 20px; border-radius: 8px;">
+                            <h3>用户账号</h3>
+                            <p style="font-size: 24px; font-weight: bold;">{{ accounts.length }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 手机号码管理 -->
+                <div v-if="currentTab === 'phones'">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2>手机号码管理</h2>
+                        <el-button type="primary" @click="showAddPhoneDialog = true" :disabled="isTrialLimitReached">
+                            添加手机号码
+                        </el-button>
+                    </div>
+                    
+                    <!-- 体验版限制提示 -->
+                    <div v-if="isTrialLimitReached" style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <p><strong>体验版限制：</strong>最多只能添加 8 个手机号码</p>
+                        <p>如需使用完整版功能，请联系管理员升级</p>
+                    </div>
+
+                    <!-- 进度指示器 -->
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>使用进度</span>
+                            <span>{{ phoneNumbers.length }}/8</span>
+                        </div>
+                        <el-progress 
+                            :percentage="progressPercentage" 
+                            :color="progressColor"
+                            :stroke-width="8">
+                        </el-progress>
+                    </div>
+
+                    <!-- 手机号码列表 -->
+                    <el-table :data="phoneNumbers" stripe style="width: 100%">
+                        <el-table-column prop="number" label="手机号码" width="150" />
+                        <el-table-column prop="operator" label="运营商" width="100" />
+                        <el-table-column prop="plan" label="套餐" width="120" />
+                        <el-table-column prop="monthlyFee" label="月费" width="80" />
+                        <el-table-column prop="status" label="状态" width="80">
+                            <template #default="scope">
+                                <el-tag :type="scope.row.status === '正常' ? 'success' : 'danger'">
+                                    {{ scope.row.status }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="notes" label="备注" />
+                        <el-table-column label="操作" width="150">
+                            <template #default="scope">
+                                <el-button type="primary" size="small" @click="editPhone(scope.row)">编辑</el-button>
+                                <el-button type="danger" size="small" @click="deletePhone(scope.$index)">删除</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+
+                <!-- 账单管理 -->
+                <div v-if="currentTab === 'bills'">
+                    <h2>账单管理</h2>
+                    <el-table :data="bills" stripe style="width: 100%; margin-top: 20px;">
+                        <el-table-column prop="phoneNumber" label="手机号码" width="150" />
+                        <el-table-column prop="amount" label="金额" width="100" />
+                        <el-table-column prop="month" label="账单月份" width="120" />
+                        <el-table-column prop="status" label="状态" width="80">
+                            <template #default="scope">
+                                <el-tag :type="scope.row.status === '已支付' ? 'success' : 'warning'">
+                                    {{ scope.row.status }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="dueDate" label="到期日期" />
+                    </el-table>
+                </div>
+
+                <!-- 账号管理 -->
+                <div v-if="currentTab === 'accounts'">
+                    <h2>账号管理</h2>
+                    <el-table :data="accounts" stripe style="width: 100%; margin-top: 20px;">
+                        <el-table-column prop="username" label="用户名" width="120" />
+                        <el-table-column prop="role" label="角色" width="80">
+                            <template #default="scope">
+                                <el-tag :type="scope.row.role === 'admin' ? 'danger' : 'primary'">
+                                    {{ scope.row.role }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="email" label="邮箱" />
+                        <el-table-column prop="lastLogin" label="最后登录" width="150" />
+                        <el-table-column prop="status" label="状态" width="80">
+                            <template #default="scope">
+                                <el-tag :type="scope.row.status === '激活' ? 'success' : 'info'">
+                                    {{ scope.row.status }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+            </div>
+
+            <!-- 添加手机号码对话框 -->
+            <el-dialog
+                title="添加手机号码"
+                v-model="showAddPhoneDialog"
+                width="500px">
+                <el-form :model="newPhone" label-width="80px">
+                    <el-form-item label="手机号码">
+                        <el-input v-model="newPhone.number" placeholder="请输入手机号码"></el-input>
+                    </el-form-item>
+                    <el-form-item label="运营商">
+                        <el-select v-model="newPhone.operator" placeholder="请选择运营商">
+                            <el-option label="中国移动" value="中国移动"></el-option>
+                            <el-option label="中国联通" value="中国联通"></el-option>
+                            <el-option label="中国电信" value="中国电信"></el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="套餐">
+                        <el-input v-model="newPhone.plan" placeholder="请输入套餐名称"></el-input>
+                    </el-form-item>
+                    <el-form-item label="月费">
+                        <el-input v-model="newPhone.monthlyFee" placeholder="请输入月费金额"></el-input>
+                    </el-form-item>
+                    <el-form-item label="备注">
+                        <el-input v-model="newPhone.notes" type="textarea" placeholder="请输入备注信息"></el-input>
+                    </el-form-item>
+                </el-form>
+                <template #footer>
+                    <el-button @click="showAddPhoneDialog = false">取消</el-button>
+                    <el-button type="primary" @click="addPhone">确认添加</el-button>
+                </template>
+            </el-dialog>
+        </template>
+    </div>
+
+    <!-- Vue 3 和 Element Plus -->
+    <script src="libs/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue/dist/index.iife.min.js"></script>
+
+    <script>
+        const { createApp } = Vue;
+        const { ElMessage, ElMessageBox } = ElementPlus;
+
+        // 图标组件
+        const { User, Lock } = ElementPlusIconsVue;
+
+        const app = createApp({
+            components: {
+                User,
+                Lock
+            },
+            data() {
+                return {
+                    // 登录状态
+                    isLoggedIn: false,
+                    loginLoading: false,
+                    currentUser: null,
+                    
+                    // 登录表单
+                    loginForm: {
+                        username: '',
+                        password: '',
+                        captcha: ''
+                    },
+                    
+                    // 登录表单验证规则
+                    loginRules: {
+                        username: [
+                            { required: true, message: '请输入用户名', trigger: 'blur' },
+                            { min: 3, max: 20, message: '用户名长度为3-20个字符', trigger: 'blur' }
+                        ],
+                        password: [
+                            { required: true, message: '请输入密码', trigger: 'blur' },
+                            { min: 6, message: '密码长度不能少于6个字符', trigger: 'blur' }
+                        ],
+                        captcha: [
+                            { required: true, message: '请输入验证码', trigger: 'blur' }
+                        ]
+                    },
+                    
+                    // 验证码
+                    showCaptcha: false,
+                    captchaUrl: '',
+                    
+                    // 登录历史
+                    recentLogins: [],
+                    
+                    // 加载状态
+                    isLoading: false,
+                    loadingProgress: 0,
+                    
+                    // 页面状态
+                    currentTab: 'dashboard',
+                    
+                    // 数据
+                    phoneNumbers: [],
+                    bills: [],
+                    accounts: [],
+                    
+                    // 对话框
+                    showAddPhoneDialog: false,
+                    newPhone: {
+                        number: '',
+                        operator: '',
+                        plan: '',
+                        monthlyFee: '',
+                        notes: '',
+                        status: '正常'
+                    },
+                    
+                    // 体验版限制
+                    maxPhoneNumbers: 8
+                }
+            },
+            
+            computed: {
+                // 体验版限制检查
+                isTrialLimitReached() {
+                    return this.phoneNumbers.length >= this.maxPhoneNumbers;
+                },
+                
+                // 进度百分比
+                progressPercentage() {
+                    return Math.round((this.phoneNumbers.length / this.maxPhoneNumbers) * 100);
+                },
+                
+                // 进度条颜色
+                progressColor() {
+                    const percentage = this.progressPercentage;
+                    if (percentage <= 62.5) return '#67c23a'; // 绿色 (1-5个)
+                    if (percentage <= 87.5) return '#e6a23c'; // 黄色 (6-7个)
+                    return '#f56c6c'; // 红色 (8个)
+                }
+            },
+            
+            methods: {
+                // 登录处理
+                async handleLogin() {
+                    try {
+                        await this.$refs.loginFormRef.validate();
+                        this.loginLoading = true;
+                        
+                        // 模拟登录API调用
+                        await this.simulateLogin();
+                        
+                        // 登录成功
+                        this.isLoggedIn = true;
+                        this.currentUser = {
+                            username: this.loginForm.username,
+                            role: this.loginForm.username === 'admin' ? 'admin' : 'user',
+                            email: this.loginForm.username + '@example.com'
+                        };
+                        
+                        // 记录登录历史
+                        this.addLoginHistory(this.loginForm.username, '成功');
+                        
+                        // 初始化数据
+                        this.initializeData();
+                        
+                        ElMessage.success('登录成功！');
+                        
+                    } catch (error) {
+                        console.error('登录失败:', error);
+                        this.addLoginHistory(this.loginForm.username, '失败');
+                        
+                        // 显示验证码
+                        this.showCaptcha = true;
+                        this.refreshCaptcha();
+                        
+                        ElMessage.error('登录失败，请检查用户名和密码');
+                    } finally {
+                        this.loginLoading = false;
+                    }
+                },
+                
+                // 模拟登录API
+                simulateLogin() {
+                    return new Promise((resolve, reject) => {
+                        setTimeout(() => {
+                            // 简单的用户验证
+                            const validUsers = {
+                                'admin': 'admin123',
+                                'user': 'user123',
+                                'demo': 'demo123'
+                            };
+                            
+                            if (validUsers[this.loginForm.username] === this.loginForm.password) {
+                                resolve();
+                            } else {
+                                reject(new Error('用户名或密码错误'));
+                            }
+                        }, 1000);
+                    });
+                },
+                
+                // 退出登录
+                async handleLogout() {
+                    try {
+                        await ElMessageBox.confirm('确认要退出登录吗？', '提示', {
+                            confirmButtonText: '确认',
+                            cancelButtonText: '取消',
+                            type: 'warning'
+                        });
+                        
+                        this.isLoggedIn = false;
+                        this.currentUser = null;
+                        this.loginForm = { username: '', password: '', captcha: '' };
+                        this.showCaptcha = false;
+                        
+                        ElMessage.success('已退出登录');
+                    } catch {
+                        // 用户取消
+                    }
+                },
+                
+                // 刷新验证码
+                refreshCaptcha() {
+                    // 生成随机验证码图片
+                    this.captchaUrl = `data:image/svg+xml;base64,${btoa(this.generateCaptchaSVG())}`;
+                },
+                
+                // 生成验证码SVG
+                generateCaptchaSVG() {
+                    const code = Math.random().toString(36).substring(2, 6).toUpperCase();
+                    return `
+                        <svg width="100" height="32" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="100%" height="100%" fill="#f0f0f0"/>
+                            <text x="50%" y="50%" text-anchor="middle" dy=".3em" 
+                                  font-family="Arial" font-size="16" fill="#333">${code}</text>
+                        </svg>
+                    `;
+                },
+                
+                // 添加登录历史
+                addLoginHistory(username, status) {
+                    const loginRecord = {
+                        username: username,
+                        ip_address: '192.168.1.1',
+                        login_time: new Date().toLocaleString(),
+                        status: status
+                    };
+                    
+                    this.recentLogins.unshift(loginRecord);
+                    if (this.recentLogins.length > 10) {
+                        this.recentLogins.pop();
+                    }
+                },
+                
+                // 初始化数据
+                initializeData() {
+                    // 初始化示例数据
+                    this.phoneNumbers = [
+                        { number: '13800138000', operator: '中国移动', plan: '移动王卡', monthlyFee: '39', status: '正常', notes: '主要号码' },
+                        { number: '13900139000', operator: '中国联通', plan: '腾讯王卡', monthlyFee: '29', status: '正常', notes: '副号' }
+                    ];
+                    
+                    this.bills = [
+                        { phoneNumber: '13800138000', amount: '39.00', month: '2025-08', status: '已支付', dueDate: '2025-08-15' },
+                        { phoneNumber: '13900139000', amount: '29.00', month: '2025-08', status: '待支付', dueDate: '2025-08-20' }
+                    ];
+                    
+                    this.accounts = [
+                        { username: 'admin', role: 'admin', email: 'admin@example.com', lastLogin: '2025-08-23 12:00', status: '激活' },
+                        { username: 'user', role: 'user', email: 'user@example.com', lastLogin: '2025-08-22 15:30', status: '激活' }
+                    ];
+                },
+                
+                // 添加手机号码
+                addPhone() {
+                    if (this.isTrialLimitReached) {
+                        ElMessage.warning('体验版最多只能添加8个手机号码');
+                        return;
+                    }
+                    
+                    if (!this.newPhone.number || !this.newPhone.operator) {
+                        ElMessage.warning('请填写必要信息');
+                        return;
+                    }
+                    
+                    // 检查手机号码是否已存在
+                    if (this.phoneNumbers.find(p => p.number === this.newPhone.number)) {
+                        ElMessage.warning('该手机号码已存在');
+                        return;
+                    }
+                    
+                    this.phoneNumbers.push({...this.newPhone});
+                    this.showAddPhoneDialog = false;
+                    this.newPhone = { number: '', operator: '', plan: '', monthlyFee: '', notes: '', status: '正常' };
+                    
+                    ElMessage.success('手机号码添加成功');
+                    
+                    // 检查是否达到限制
+                    if (this.isTrialLimitReached) {
+                        ElMessage.info('已达到体验版限制（8个手机号码）');
+                    }
+                },
+                
+                // 编辑手机号码
+                editPhone(phone) {
+                    ElMessage.info('编辑功能开发中...');
+                },
+                
+                // 删除手机号码
+                async deletePhone(index) {
+                    try {
+                        await ElMessageBox.confirm('确认要删除这个手机号码吗？', '提示', {
+                            confirmButtonText: '确认',
+                            cancelButtonText: '取消',
+                            type: 'warning'
+                        });
+                        
+                        this.phoneNumbers.splice(index, 1);
+                        ElMessage.success('删除成功');
+                    } catch {
+                        // 用户取消
+                    }
+                }
+            },
+            
+            mounted() {
+                // 检查本地存储的登录状态
+                const savedUser = localStorage.getItem('currentUser');
+                if (savedUser) {
+                    this.currentUser = JSON.parse(savedUser);
+                    this.isLoggedIn = true;
+                    this.initializeData();
+                }
+                
+                // 生成初始验证码
+                this.refreshCaptcha();
+            },
+            
+            watch: {
+                // 监听登录状态，保存到本地存储
+                currentUser: {
+                    handler(newUser) {
+                        if (newUser) {
+                            localStorage.setItem('currentUser', JSON.stringify(newUser));
+                        } else {
+                            localStorage.removeItem('currentUser');
+                        }
+                    },
+                    deep: true
+                }
+            }
+        });
+        
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+</body>
+</html>

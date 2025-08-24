@@ -1,0 +1,77 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - heading "手机号码管理系统" [level=1] [ref=e6]
+      - generic [ref=e7]: v3.0 体验版
+      - generic [ref=e8]: 限制 8 个号码
+    - generic [ref=e9]:
+      - button "仪表盘" [ref=e10] [cursor=pointer]
+      - button "号码管理" [ref=e11] [cursor=pointer]
+      - button "账号关联" [ref=e12] [cursor=pointer]
+      - button "费用统计" [ref=e13] [cursor=pointer]
+      - button "系统设置" [ref=e14] [cursor=pointer]
+  - generic [ref=e16]:
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - heading "总号码数 (体验版)" [level=3] [ref=e19]:
+          - text: 总号码数
+          - generic [ref=e20]: (体验版)
+        - generic [ref=e21]: 0 / 8
+        - generic [ref=e22]: "活跃: 0"
+        - generic [ref=e25]: "使用率: 0%"
+      - generic [ref=e26]:
+        - heading "本月费用" [level=3] [ref=e27]
+        - generic [ref=e28]: ¥0.00
+        - generic [ref=e29]: 新增
+      - generic [ref=e30]:
+        - heading "关联账号" [level=3] [ref=e31]
+        - generic [ref=e32]: "0"
+        - generic [ref=e33]: 0 个平台
+      - generic [ref=e34]:
+        - heading "快速查询" [level=3] [ref=e35]
+        - generic [ref=e36]:
+          - textbox "输入手机号" [ref=e37]
+          - button "查询" [ref=e38] [cursor=pointer]
+        - generic [ref=e39]: 输入手机号码快速查看关联账号信息
+    - heading "快速操作" [level=3] [ref=e40]
+    - generic [ref=e41]:
+      - button "添加号码 (0/8)" [active] [ref=e42] [cursor=pointer]
+      - button "录入账单" [ref=e43] [cursor=pointer]
+      - button "分批加载数据(50条)" [ref=e44] [cursor=pointer]
+      - button "显示性能指标" [ref=e45] [cursor=pointer]
+    - generic [ref=e46]:
+      - heading "费用趋势" [level=3] [ref=e48]
+      - heading "费用构成" [level=3] [ref=e51]
+  - generic [ref=e54]:
+    - heading "添加手机号" [level=2] [ref=e55]
+    - generic [ref=e56]:
+      - generic [ref=e57]: 手机号码
+      - textbox [ref=e58]
+    - generic [ref=e59]:
+      - generic [ref=e60]: 运营商
+      - combobox [ref=e61]:
+        - option "中国移动" [selected]
+        - option "中国联通"
+        - option "中国电信"
+    - generic [ref=e62]:
+      - generic [ref=e63]: 状态
+      - combobox [ref=e64]:
+        - option "在用" [selected]
+        - option "停用"
+        - option "已销号"
+    - generic [ref=e65]:
+      - generic [ref=e66]: 套餐类型
+      - textbox [ref=e67]
+    - generic [ref=e68]:
+      - generic [ref=e69]: 月费(元)
+      - spinbutton [ref=e70]: "0"
+    - generic [ref=e71]:
+      - generic [ref=e72]: 负责人
+      - textbox [ref=e73]
+    - generic [ref=e74]:
+      - button "取消" [ref=e75] [cursor=pointer]
+      - button "保存" [ref=e76] [cursor=pointer]
+```
