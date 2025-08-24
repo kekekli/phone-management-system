@@ -2064,14 +2064,25 @@
                 },
                 
                 updateCharts() {
-                    if (this.costChart) {
-                        this.costChart.data.datasets[0].data = this.getMonthlyTrend();
-                        this.costChart.update('none');
-                    }
-                    
-                    if (this.billChart) {
-                        this.billChart.data.datasets[0].data = [this.monthlyBaseFee, this.monthlyExtraFee];
-                        this.billChart.update('none');
+                    try {
+                        if (this.costChart && typeof this.costChart.update === 'function') {
+                            const monthlyData = this.getMonthlyTrend();
+                            if (this.costChart.data && this.costChart.data.datasets && this.costChart.data.datasets[0]) {
+                                this.costChart.data.datasets[0].data = monthlyData;
+                                this.costChart.update('none');
+                            }
+                        }
+                        
+                        if (this.billChart && typeof this.billChart.update === 'function') {
+                            const billData = [this.monthlyBaseFee, this.monthlyExtraFee];
+                            if (this.billChart.data && this.billChart.data.datasets && this.billChart.data.datasets[0]) {
+                                this.billChart.data.datasets[0].data = billData;
+                                this.billChart.update('none');
+                            }
+                        }
+                    } catch (error) {
+                        console.warn('图表更新失败:', error);
+                        // 避免无限循环，不在这里重新抛出异常
                     }
                 },
                 
@@ -2547,8 +2558,24 @@
                             const text = await file.text();
                             const backup = JSON.parse(text);
                             
-                            if (!backup.data) {
-                                throw new Error('无效的备份文件格式');
+                            // 支持多种数据格式
+                            let restoreData;
+                            if (backup.data) {
+                                // 标准备份格式
+                                restoreData = backup.data;
+                            } else if (backup.phoneNumbers) {
+                                // 旧格式或测试格式
+                                restoreData = {
+                                    phones: backup.phoneNumbers,
+                                    accounts: backup.accounts || [],
+                                    bills: backup.bills || [],
+                                    settings: backup.settings || {}
+                                };
+                            } else if (backup.phones) {
+                                // 直接包含数据的格式
+                                restoreData = backup;
+                            } else {
+                                throw new Error('无效的备份文件格式：未找到有效的数据结构');
                             }
                             
                             // 清空现有数据
@@ -2566,7 +2593,7 @@
                                 const promises = [];
                                 
                                 // 恢复手机号码数据
-                                for (const phone of backup.data.phones || []) {
+                                for (const phone of restoreData.phones || []) {
                                     promises.push(new Promise((resolve, reject) => {
                                         const request = phoneStore.add(phone);
                                         request.onsuccess = () => resolve();
@@ -2575,7 +2602,7 @@
                                 }
                                 
                                 // 恢复账号数据
-                                for (const account of backup.data.accounts || []) {
+                                for (const account of restoreData.accounts || []) {
                                     promises.push(new Promise((resolve, reject) => {
                                         const request = accountStore.add(account);
                                         request.onsuccess = () => resolve();
@@ -2584,7 +2611,7 @@
                                 }
                                 
                                 // 恢复账单数据
-                                for (const bill of backup.data.bills || []) {
+                                for (const bill of restoreData.bills || []) {
                                     promises.push(new Promise((resolve, reject) => {
                                         const request = billStore.add(bill);
                                         request.onsuccess = () => resolve();
@@ -2596,11 +2623,11 @@
                             }
                             
                             // 更新应用数据
-                            this.allPhonesData = backup.data.phones || [];
+                            this.allPhonesData = restoreData.phones || [];
                             this.phones = this.allPhonesData.slice(0, this.batchSize);
-                            this.accounts = backup.data.accounts || [];
-                            this.bills = backup.data.bills || [];
-                            this.settings = backup.data.settings || {};
+                            this.accounts = restoreData.accounts || [];
+                            this.bills = restoreData.bills || [];
+                            this.settings = restoreData.settings || {};
                             
                             this.totalDataCount = this.allPhonesData.length;
                             this.loadedDataCount = this.phones.length;
@@ -2608,7 +2635,10 @@
                             this.remainingCount = this.totalDataCount - this.loadedDataCount;
                             
                             this.buildMaps();
-                            this.updateCharts();
+                            
+                            // 暂时跳过图表更新以避免堆栈溢出，数据恢复完成后用户可手动刷新页面
+                            console.log('数据恢复成功，跳过图表更新以防止页面卡死。如需查看最新图表，请刷新页面。');
+                            
                             this.showToast(`恢复成功！恢复了 ${this.allPhonesData.length} 个手机号码`, 'success');
                             
                         } catch (error) {
