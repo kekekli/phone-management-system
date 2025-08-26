@@ -504,7 +504,7 @@
                 
                 <div class="login-footer">
                     <p>还没有账户？<a href="#" @click.prevent="showRegister">立即注册</a></p>
-                    <p style="margin-top: 10px;"><a href="#" @click.prevent="guestLogin">游客模式</a></p>
+                    <!-- <p style="margin-top: 10px;"><a href="#" @click.prevent="guestLogin">游客模式</a></p> -->
                 </div>
             </div>
         </div>
@@ -1050,128 +1050,232 @@
         }
 
         // IndexedDB工具类
-        class Database {
+        // 替换原有的 Database 类为 RemoteDatabase
+        class RemoteDatabase {
             constructor() {
-                this.db = null;
-                this.dbName = 'PhoneManagementDB_Auth'; // 新的数据库名避免版本冲突
-                this.version = 1;
+                // 根据当前访问地址自动设置API地址
+                const currentHost = window.location.hostname;
+                const currentPort = window.location.port || '80';
+                
+                // 如果是file://协议，使用localhost
+                if (window.location.protocol === 'file:') {
+                    this.apiUrl = 'http://localhost:5001/api';
+                } else {
+                    // 使用当前服务器地址
+                    this.apiUrl = `http://${currentHost}:5001/api`;
+                }
+                
+                console.log('API服务器地址:', this.apiUrl);
+                
+                // 获取保存的token
+                this.token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
             }
-
+            
+            // 设置认证token
+            setToken(token) {
+                this.token = token;
+                sessionStorage.setItem('authToken', token);
+            }
+            
+            // 清除token
+            clearToken() {
+                this.token = null;
+                sessionStorage.removeItem('authToken');
+                localStorage.removeItem('authToken');
+            }
+            
+            // 通用请求方法
+            async request(url, options = {}) {
+                const headers = {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                };
+                
+                // 添加认证头
+                if (this.token) {
+                    headers['Authorization'] = `Bearer ${this.token}`;
+                }
+                
+                try {
+                    const response = await fetch(`${this.apiUrl}${url}`, {
+                        ...options,
+                        headers
+                    });
+                    
+                    if (response.status === 401) {
+                        // token过期，需要重新登录
+                        this.clearToken();
+                        // 触发重新登录
+                        window.location.reload();
+                        throw new Error('认证失败，请重新登录');
+                    }
+                    
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.message || '请求失败');
+                    }
+                    
+                    if (response.status === 204) {
+                        return null; // 删除操作成功
+                    }
+                    
+                    return await response.json();
+                } catch (error) {
+                    console.error('API请求失败:', error);
+                    throw error;
+                }
+            }
+            
+            // 登录
+            async login(username, password) {
+                const response = await fetch(`${this.apiUrl}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.setToken(data.token);
+                }
+                
+                return data;
+            }
+            
+            // 模拟IndexedDB的init方法
             async init() {
-                return new Promise((resolve, reject) => {
-                    const request = indexedDB.open(this.dbName, this.version);
-
-                    request.onerror = () => reject(request.error);
-                    request.onsuccess = () => {
-                        this.db = request.result;
-                        resolve(this.db);
-                    };
-
-                    request.onupgradeneeded = (event) => {
-                        const db = event.target.result;
-
-                        if (!db.objectStoreNames.contains('phones')) {
-                            const phoneStore = db.createObjectStore('phones', { keyPath: 'id' });
-                            phoneStore.createIndex('number', 'number', { unique: false });
-                            phoneStore.createIndex('status', 'status');
-                        }
-
-                        if (!db.objectStoreNames.contains('accounts')) {
-                            const accountStore = db.createObjectStore('accounts', { keyPath: 'id' });
-                            accountStore.createIndex('phoneId', 'phoneId');
-                            accountStore.createIndex('platform', 'platform');
-                        }
-
-                        if (!db.objectStoreNames.contains('bills')) {
-                            const billStore = db.createObjectStore('bills', { keyPath: 'id' });
-                            billStore.createIndex('phoneId', 'phoneId');
-                            billStore.createIndex('yearMonth', 'yearMonth');
-                        }
-
-                        if (!db.objectStoreNames.contains('settings')) {
-                            db.createObjectStore('settings', { keyPath: 'key' });
-                        }
-                        
-                        // 新增用户存储
-                        if (!db.objectStoreNames.contains('users')) {
-                            const userStore = db.createObjectStore('users', { keyPath: 'id', autoIncrement: true });
-                            userStore.createIndex('username', 'username', { unique: true });
-                            userStore.createIndex('email', 'email', { unique: false });
-                        }
-                        
-                        // 新增登录日志存储
-                        if (!db.objectStoreNames.contains('loginLogs')) {
-                            const logStore = db.createObjectStore('loginLogs', { keyPath: 'id', autoIncrement: true });
-                            logStore.createIndex('userId', 'userId');
-                            logStore.createIndex('loginTime', 'loginTime');
-                        }
-                        
-                        // 新增安全设置存储
-                        if (!db.objectStoreNames.contains('security')) {
-                            db.createObjectStore('security', { keyPath: 'key' });
-                        }
-                    };
-                });
+                // 测试连接
+                try {
+                    const response = await fetch(`${this.apiUrl}/health`);
+                    const data = await response.json();
+                    console.log('服务器连接成功:', data);
+                    return true;
+                } catch (error) {
+                    console.error('服务器连接失败:', error);
+                    throw new Error('无法连接到服务器');
+                }
             }
-
+            
+            // 获取所有数据
             async getAll(storeName) {
-                const transaction = this.db.transaction([storeName], 'readonly');
-                const store = transaction.objectStore(storeName);
-                return new Promise((resolve, reject) => {
-                    const request = store.getAll();
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
-                });
+                const mapping = {
+                    'phones': '/phones',
+                    'accounts': '/accounts',
+                    'bills': '/bills',
+                    'users': '/users',
+                    'settings': '/settings'
+                };
+                
+                const endpoint = mapping[storeName];
+                if (!endpoint) {
+                    console.warn('未知的存储名称:', storeName);
+                    return [];
+                }
+                
+                try {
+                    const result = await this.request(endpoint);
+                    // 确保返回的是数组
+                    return Array.isArray(result) ? result : [];
+                } catch (error) {
+                    console.error(`获取${storeName}数据失败:`, error);
+                    return [];
+                }
             }
-
+            
+            // 添加数据
             async add(storeName, data) {
-                const transaction = this.db.transaction([storeName], 'readwrite');
-                const store = transaction.objectStore(storeName);
-                return new Promise((resolve, reject) => {
-                    const request = store.add(data);
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
+                const mapping = {
+                    'phones': '/phones',
+                    'accounts': '/accounts',
+                    'bills': '/bills'
+                };
+                
+                const endpoint = mapping[storeName];
+                if (!endpoint) {
+                    throw new Error('不支持的操作');
+                }
+                
+                const result = await this.request(endpoint, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
                 });
+                
+                return result.id || data.id;
             }
-
+            
+            // 更新数据
             async update(storeName, data) {
-                const transaction = this.db.transaction([storeName], 'readwrite');
-                const store = transaction.objectStore(storeName);
-                return new Promise((resolve, reject) => {
-                    const request = store.put(data);
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
+                const mapping = {
+                    'phones': '/phones',
+                    'accounts': '/accounts',
+                    'bills': '/bills'
+                };
+                
+                const endpoint = mapping[storeName];
+                if (!endpoint) {
+                    throw new Error('不支持的操作');
+                }
+                
+                return await this.request(`${endpoint}/${data.id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(data)
                 });
             }
-
+            
+            // 删除数据
             async delete(storeName, id) {
-                const transaction = this.db.transaction([storeName], 'readwrite');
-                const store = transaction.objectStore(storeName);
-                return new Promise((resolve, reject) => {
-                    const request = store.delete(id);
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
+                const mapping = {
+                    'phones': '/phones',
+                    'accounts': '/accounts',
+                    'bills': '/bills'
+                };
+                
+                const endpoint = mapping[storeName];
+                if (!endpoint) {
+                    throw new Error('不支持的操作');
+                }
+                
+                return await this.request(`${endpoint}/${id}`, {
+                    method: 'DELETE'
                 });
             }
-
+            
+            // 获取单个数据（兼容方法）
             async get(storeName, id) {
-                const transaction = this.db.transaction([storeName], 'readonly');
-                const store = transaction.objectStore(storeName);
-                return new Promise((resolve, reject) => {
-                    const request = store.get(id);
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
-                });
+                try {
+                    const allData = await this.getAll(storeName);
+                    // 确保 allData 是数组
+                    if (Array.isArray(allData)) {
+                        return allData.find(item => item.id === id);
+                    } else {
+                        console.warn('数据格式错误，期望数组:', allData);
+                        return null;
+                    }
+                } catch (error) {
+                    console.error('获取单个数据失败:', error);
+                    return null;
+                }
             }
-
+            
+            // 清空数据（需要管理员权限）
             async clear(storeName) {
-                const transaction = this.db.transaction([storeName], 'readwrite');
-                const store = transaction.objectStore(storeName);
-                return new Promise((resolve, reject) => {
-                    const request = store.clear();
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
-                });
+                // 清空指定集合的所有数据（仅管理员）
+                console.log(`正在清空 ${storeName} 数据...`);
+                
+                try {
+                    const response = await this.request(`/${storeName}/clear`, {
+                        method: 'DELETE'
+                    });
+                    
+                    console.log(`成功清空 ${storeName}:`, response);
+                    return true;
+                } catch (error) {
+                    console.error(`清空 ${storeName} 失败:`, error);
+                    return false;
+                }
             }
         }
 
@@ -1208,8 +1312,8 @@
                     startTime: Date.now(),
                     loadTime: 0,
                     
-                    // 数据库
-                    db: new Database(),
+                    // 数据库 - 使用远程数据库替换本地数据库
+                    db: new RemoteDatabase(),
                     
                     // 分批加载
                     batchSize: 50,
@@ -1556,102 +1660,39 @@
                     this.loginError = '';
                     this.loginSuccess = '';
                     
-                    // 表单验证
                     if (!this.loginForm.username || !this.loginForm.password) {
                         this.loginError = '请填写用户名和密码';
                         return;
                     }
                     
-                    // 验证码检查
-                    if (this.showCaptcha) {
-                        if (!this.loginForm.captcha) {
-                            this.loginError = '请输入验证码';
-                            return;
-                        }
-                        if (this.loginForm.captcha.toUpperCase() !== this.captchaText.toUpperCase()) {
-                            this.loginError = '验证码错误';
-                            this.refreshCaptcha();
-                            return;
-                        }
-                    }
-                    
                     this.loginLoading = true;
                     
                     try {
-                        // 获取用户
-                        const user = await this.getUserByUsername(this.loginForm.username);
-                        if (!user) {
-                            throw new Error('用户不存在');
-                        }
+                        // 使用API登录
+                        const result = await this.db.login(
+                            this.loginForm.username,
+                            this.loginForm.password
+                        );
                         
-                        // 验证密码
-                        const inputPasswordHash = this.hashPassword(this.loginForm.password);
-                        if (user.password !== inputPasswordHash) {
-                            throw new Error('密码错误');
-                        }
-                        
-                        // 登录成功
-                        this.currentUser = user;
-                        this.isLoggedIn = true;
-                        this.loginSuccess = '登录成功！';
-                        
-                        // 更新用户登录信息
-                        user.lastLogin = new Date().toISOString();
-                        user.loginCount = (user.loginCount || 0) + 1;
-                        await this.db.update('users', user);
-                        
-                        // 记录成功登录日志
-                        await this.logLogin(user.id, true);
-                        
-                        // 重置失败计数
-                        this.loginFailCount = 0;
-                        
-                        // 处理记住我功能
-                        if (this.loginForm.rememberMe) {
-                            localStorage.setItem('rememberedUser', JSON.stringify({
-                                username: user.username,
-                                password: user.password
-                            }));
+                        if (result.success) {
+                            this.currentUser = result.user;
+                            this.isLoggedIn = true;
+                            this.loginSuccess = '登录成功！';
+                            
+                            // 记住我功能
+                            if (this.loginForm.rememberMe) {
+                                localStorage.setItem('authToken', result.token);
+                            }
+                            
+                            setTimeout(() => {
+                                this.showLoginPage = false;
+                                this.initApp();
+                            }, 1000);
                         } else {
-                            localStorage.removeItem('rememberedUser');
+                            this.loginError = result.message || '登录失败';
                         }
-                        
-                        // 设置会话
-                        sessionStorage.setItem('currentUser', JSON.stringify(user));
-                        
-                        // 延迟跳转到主应用
-                        setTimeout(() => {
-                            this.showLoginPage = false;
-                            this.initApp();
-                        }, 1000);
-                        
                     } catch (error) {
-                        // 登录失败
-                        this.loginFailCount++;
-                        this.loginError = error.message;
-                        
-                        // 记录失败登录日志
-                        const user = await this.getUserByUsername(this.loginForm.username);
-                        if (user) {
-                            await this.logLogin(user.id, false, error.message);
-                        }
-                        
-                        // 失败3次后显示验证码
-                        if (this.loginFailCount >= 3) {
-                            this.showCaptcha = true;
-                            this.generateCaptcha();
-                        }
-                        
-                        // 失败5次后锁定
-                        if (this.loginFailCount >= 5) {
-                            this.loginError = '登录失败次数过多，请5分钟后再试';
-                            // 这里可以添加更复杂的锁定逻辑
-                        }
-                        
-                        // 清空密码
-                        this.loginForm.password = '';
-                        this.loginForm.captcha = '';
-                        this.refreshCaptcha();
+                        this.loginError = error.message || '登录失败';
                     } finally {
                         this.loginLoading = false;
                     }
@@ -2578,68 +2619,97 @@
                                 throw new Error('无效的备份文件格式：未找到有效的数据结构');
                             }
                             
-                            // 清空现有数据
-                            await this.db.clear('phones');
-                            await this.db.clear('accounts');
-                            await this.db.clear('bills');
+                            // 删除现有数据（逐个删除）
+                            console.log('正在删除现有数据...');
                             
-                            // 恢复数据（批量操作优化）
-                            if (this.db.db) {
-                                const transaction = this.db.db.transaction(['phones', 'accounts', 'bills'], 'readwrite');
-                                const phoneStore = transaction.objectStore('phones');
-                                const accountStore = transaction.objectStore('accounts');
-                                const billStore = transaction.objectStore('bills');
-                                
-                                const promises = [];
-                                
+                            // 获取现有数据并删除
+                            const existingPhones = await this.db.getAll('phones');
+                            const existingAccounts = await this.db.getAll('accounts');
+                            const existingBills = await this.db.getAll('bills');
+                            
+                            // 删除所有现有手机号码
+                            for (const phone of existingPhones) {
+                                try {
+                                    await this.db.delete('phones', phone.id);
+                                } catch (error) {
+                                    console.warn('删除手机号码失败:', error.message);
+                                }
+                            }
+                            
+                            // 删除所有现有账号
+                            for (const account of existingAccounts) {
+                                try {
+                                    await this.db.delete('accounts', account.id);
+                                } catch (error) {
+                                    console.warn('删除账号失败:', error.message);
+                                }
+                            }
+                            
+                            // 删除所有现有账单
+                            for (const bill of existingBills) {
+                                try {
+                                    await this.db.delete('bills', bill.id);
+                                } catch (error) {
+                                    console.warn('删除账单失败:', error.message);
+                                }
+                            }
+                            
+                            console.log(`已删除 ${existingPhones.length} 个手机号码, ${existingAccounts.length} 个账号, ${existingBills.length} 个账单`);
+                            
+                            // 使用API恢复数据到后端数据库
+                            let restoredPhones = 0;
+                            let restoredAccounts = 0;
+                            let restoredBills = 0;
+                            
+                            try {
                                 // 恢复手机号码数据
                                 for (const phone of restoreData.phones || []) {
-                                    promises.push(new Promise((resolve, reject) => {
-                                        const request = phoneStore.add(phone);
-                                        request.onsuccess = () => resolve();
-                                        request.onerror = () => reject(request.error);
-                                    }));
+                                    try {
+                                        await this.db.add('phones', phone);
+                                        restoredPhones++;
+                                    } catch (error) {
+                                        console.warn('恢复手机号码失败:', error.message, phone);
+                                    }
                                 }
                                 
                                 // 恢复账号数据
                                 for (const account of restoreData.accounts || []) {
-                                    promises.push(new Promise((resolve, reject) => {
-                                        const request = accountStore.add(account);
-                                        request.onsuccess = () => resolve();
-                                        request.onerror = () => reject(request.error);
-                                    }));
+                                    try {
+                                        await this.db.add('accounts', account);
+                                        restoredAccounts++;
+                                    } catch (error) {
+                                        console.warn('恢复账号失败:', error.message, account);
+                                    }
                                 }
                                 
                                 // 恢复账单数据
                                 for (const bill of restoreData.bills || []) {
-                                    promises.push(new Promise((resolve, reject) => {
-                                        const request = billStore.add(bill);
-                                        request.onsuccess = () => resolve();
-                                        request.onerror = () => reject(request.error);
-                                    }));
+                                    try {
+                                        await this.db.add('bills', bill);
+                                        restoredBills++;
+                                    } catch (error) {
+                                        console.warn('恢复账单失败:', error.message, bill);
+                                    }
                                 }
                                 
-                                await Promise.all(promises);
+                                console.log(`数据恢复完成 - 手机号码: ${restoredPhones}, 账号: ${restoredAccounts}, 账单: ${restoredBills}`);
+                                
+                            } catch (error) {
+                                console.error('数据恢复过程中出错:', error);
+                                throw new Error(`数据恢复失败: ${error.message}`);
                             }
                             
-                            // 更新应用数据
-                            this.allPhonesData = restoreData.phones || [];
-                            this.phones = this.allPhonesData.slice(0, this.batchSize);
-                            this.accounts = restoreData.accounts || [];
-                            this.bills = restoreData.bills || [];
-                            this.settings = restoreData.settings || {};
+                            // 从后端重新加载所有数据以确保同步
+                            await this.loadInitialData();
                             
-                            this.totalDataCount = this.allPhonesData.length;
-                            this.loadedDataCount = this.phones.length;
-                            this.hasMoreData = this.loadedDataCount < this.totalDataCount;
-                            this.remainingCount = this.totalDataCount - this.loadedDataCount;
-                            
+                            // 重新构建映射和更新UI
                             this.buildMaps();
                             
-                            // 暂时跳过图表更新以避免堆栈溢出，数据恢复完成后用户可手动刷新页面
+                            // 暂时跳过图表更新以避免堆栈溢出
                             console.log('数据恢复成功，跳过图表更新以防止页面卡死。如需查看最新图表，请刷新页面。');
                             
-                            this.showToast(`恢复成功！恢复了 ${this.allPhonesData.length} 个手机号码`, 'success');
+                            const totalRestored = restoredPhones + restoredAccounts + restoredBills;
+                            this.showToast(`恢复成功！恢复了 ${restoredPhones} 个手机号码, ${restoredAccounts} 个账号, ${restoredBills} 个账单`, 'success');
                             
                         } catch (error) {
                             console.error('恢复数据失败:', error);
