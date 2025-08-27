@@ -1053,22 +1053,49 @@
         // 替换原有的 Database 类为 RemoteDatabase
         class RemoteDatabase {
             constructor() {
-                // 根据当前访问地址自动设置API地址
-                const currentHost = window.location.hostname;
-                const currentPort = window.location.port || '80';
+                // 智能判断API地址
+                this.apiUrl = this.getApiUrl();
                 
-                // 如果是file://协议，使用localhost
-                if (window.location.protocol === 'file:') {
-                    this.apiUrl = 'http://localhost:5001/api';
-                } else {
-                    // 使用当前服务器地址
-                    this.apiUrl = `http://${currentHost}:5001/api`;
-                }
-                
-                console.log('API服务器地址:', this.apiUrl);
+                console.log('🌐 API服务器地址:', this.apiUrl);
                 
                 // 获取保存的token
                 this.token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+            }
+            
+            getApiUrl() {
+                const hostname = window.location.hostname;
+                const protocol = window.location.protocol;
+                
+                // 生产环境地址 (需要部署时更新)
+                const PRODUCTION_API_URL = 'https://YOUR-APP-NAME.railway.app/api';
+                
+                // 本地开发环境
+                const LOCAL_API_URL = 'http://localhost:5001/api';
+                
+                // 判断运行环境
+                if (protocol === 'file:' || 
+                    hostname === 'localhost' || 
+                    hostname === '127.0.0.1' ||
+                    hostname.includes('localhost') ||
+                    hostname.includes('127.0.0.1')) {
+                    return LOCAL_API_URL;
+                }
+                
+                // 生产环境 - 如果域名包含特定关键词
+                if (hostname.includes('railway.app') || 
+                    hostname.includes('pages.dev') ||
+                    hostname.includes('vercel.app') ||
+                    hostname.includes('netlify.app')) {
+                    return PRODUCTION_API_URL;
+                }
+                
+                // 默认使用当前域名的API
+                const port = window.location.port;
+                if (port && port !== '80' && port !== '443') {
+                    return `${protocol}//${hostname}:5001/api`;
+                } else {
+                    return `${protocol}//${hostname}/api`;
+                }
             }
             
             // 设置认证token

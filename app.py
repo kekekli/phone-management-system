@@ -2,14 +2,19 @@
 # -*- coding: utf-8 -*-
 """
 手机号码管理系统 - Flask后端服务器
-支持多用户、数据同步、自动备份
+支持多用户、数据同步、自动备份、生产环境部署
 """
+
+import os
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv()
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import jwt
 import json
-import os
 from datetime import datetime, timedelta
 from functools import wraps
 import hashlib
@@ -19,8 +24,10 @@ app = Flask(__name__)
 CORS(app)  # 允许跨域请求
 
 # 配置
-app.config['SECRET_KEY'] = 'phone-management-system-secret-key-2023'
-DATA_DIR = 'data'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'phone-management-system-secret-key-2023')
+
+# Railway使用Volume存储数据，本地开发使用data目录
+DATA_DIR = os.environ.get('RAILWAY_VOLUME_MOUNT_PATH', 'data')
 DATABASE_FILE = os.path.join(DATA_DIR, 'database.json')
 BACKUP_DIR = os.path.join(DATA_DIR, 'backups')
 
@@ -523,29 +530,44 @@ def static_files(filename):
 
 # ==================== 启动服务器 ====================
 
-if __name__ == '__main__':
-    print("========================================")
-    print("  手机号码管理系统 - 服务器启动中...")
-    print("========================================")
-    print("")
-    print("🔧 初始化数据库...")
-    
-    # 初始化数据库
+def init_database():
+    """初始化数据库"""
     db = load_database()
-    print(f"✅ 数据库初始化完成")
-    print(f"📂 数据目录: {os.path.abspath(DATA_DIR)}")
-    print("")
+    return db
+
+if __name__ == '__main__':
+    # 初始化数据库
+    init_database()
     
-    print("🚀 启动Web服务器...")
-    print("📱 访问地址:")
-    print("   本机访问: http://localhost:5001")
-    print("   本机访问: http://127.0.0.1:5001")
-    print("")
-    print("🔐 默认账户: admin / admin123")
-    print("⚠️  请及时修改默认密码")
-    print("")
-    print("💡 按 Ctrl+C 停止服务器")
-    print("========================================")
+    # Railway会设置PORT环境变量
+    port = int(os.environ.get('PORT', 5001))
+    debug_mode = os.environ.get('FLASK_ENV') == 'development'
     
-    # 启动Flask开发服务器
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    # 生产环境不显示详细信息
+    if not debug_mode:
+        print(f"🚀 手机号码管理系统启动中...")
+        print(f"📂 数据目录: {DATA_DIR}")
+        print(f"🌐 服务器端口: {port}")
+        print(f"🔐 默认账户: admin / admin123")
+    else:
+        # 本地开发环境显示详细信息
+        print("========================================")
+        print("  手机号码管理系统 - 开发环境")
+        print("========================================")
+        print("")
+        print("🔧 初始化数据库...")
+        print(f"✅ 数据库初始化完成")
+        print(f"📂 数据目录: {os.path.abspath(DATA_DIR)}")
+        print("")
+        print("🚀 启动Web服务器...")
+        print("📱 访问地址:")
+        print(f"   本机访问: http://localhost:{port}")
+        print(f"   本机访问: http://127.0.0.1:{port}")
+        print("")
+        print("🔐 默认账户: admin / admin123")
+        print("⚠️  请及时修改默认密码")
+        print("")
+        print("💡 按 Ctrl+C 停止服务器")
+        print("========================================")
+    
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
